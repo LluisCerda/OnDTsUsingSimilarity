@@ -1,5 +1,5 @@
 import numpy as np
-from graphviz import Digraph
+from pyvis.network import Network
 
 class StDecisionTree:
     
@@ -77,27 +77,38 @@ class StDecisionTree:
         else:
             return self._traverse_tree(x, node["right"])
 
-    def visualize_tree_graphviz(self, node=None, dot=None, parent=None, edge_label=""):
-        if node is None:
-            node = self.tree
-            dot = Digraph()
-            dot.node("root", "Root")
-            self.visualize_tree_graphviz(node, dot, parent="root")
-            return dot
 
-        if isinstance(node, dict):
-            node_id = f"{node['feature']}_{node['threshold']}"
-            dot.node(node_id, f"Feature {node['feature']} <= {node['threshold']}")
-            if parent:
-                dot.edge(parent, node_id, label=edge_label)
-            self.visualize_tree_graphviz(node["left"], dot, node_id, "Yes")
-            self.visualize_tree_graphviz(node["right"], dot, node_id, "No")
-        else:
-            leaf_id = f"leaf_{node}"
-            dot.node(leaf_id, f"Class: {node}", shape="box")
-            dot.edge(parent, leaf_id, label=edge_label)
+    def visualize_tree_pyvis(self, output_file="tree.html"):
 
-        return dot
+        net = Network(notebook=True, directed=True)
 
 
+        node_counter = {"count": 0}  # To ensure unique leaf nodes
+
+        def add_edges(node, parent=None, is_root=False, edge_label=""):
+            if isinstance(node, dict):
+                node_label = f"Feature {node['feature']} ≤ {node['threshold']}"
+
+                # Root node
+                if is_root:
+                    net.add_node(node_label, label=node_label, color="red", shape="box")
+                else:
+                    net.add_node(node_label, label=node_label, color="lightblue")
+
+                if parent:
+                    net.add_edge(parent, node_label, label=edge_label)
+
+                add_edges(node["left"], node_label, edge_label="Yes")
+                add_edges(node["right"], node_label, edge_label="No")
+            else:
+                node_counter["count"] += 1
+                leaf_label = f"Class {node} - {node_counter['count']}"
+                net.add_node(leaf_label, label=f"Class {node}", color="lightgreen")
+                if parent:
+                    net.add_edge(parent, leaf_label, label=edge_label) 
+
+
+        # Start with the root node
+        add_edges(self.tree, is_root=True)
+        net.show(output_file)
 
