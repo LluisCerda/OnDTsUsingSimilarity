@@ -15,7 +15,7 @@ class STDecisionTreeClassifier:
         unique_labels = np.unique(y)
 
         if len(unique_labels) == 1:
-            return unique_labels[0]  # Pure class
+            return unique_labels[0]  
 
         if self.max_depth is not None and depth >= self.max_depth:
             return np.bincount(y).argmax() 
