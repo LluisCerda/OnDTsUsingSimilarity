@@ -1,8 +1,12 @@
 import numpy as np
-import gower
 import utils
 
-class SimilarityDecisionTreeClassifier:
+'''
+This class is a decision tree classifier that uses the Gower distance to compute the similarity between samples.
+Tries all possible thresholds to find the one that minimizes the Gini impurity.
+'''
+
+class SimilarityDecisionTreeClassifier2:
     
     def __init__(self, isCategorical, max_depth=4):
         self.max_depth = max_depth
@@ -19,22 +23,22 @@ class SimilarityDecisionTreeClassifier:
             return np.bincount(y).argmax()
         
         
-        medoid, distances = self._compute_medoid(X)
-
-        threshold = self._find_best_threshold(distances, y)
-        if threshold is None:
-            return np.bincount(y).argmax()
+        medoid, distances, mean = self._compute_medoid(X)
         
-        left_indices = distances <= threshold
+        left_indices = distances <= mean
         right_indices = ~left_indices
         
         if np.sum(left_indices) == 0 or np.sum(right_indices) == 0:
             return np.bincount(y).argmax()
         
+        print(len(left_indices))
+        print(len(right_indices))
+        print(len(X))
+        print(X[left_indices])
         left_subtree = self._build_tree(X[left_indices], y[left_indices], depth + 1)
         right_subtree = self._build_tree(X[right_indices], y[right_indices], depth + 1)
         
-        return {"medoid": medoid, "threshold": threshold, "left": left_subtree, "right": right_subtree}
+        return {"medoid": medoid, "threshold": mean, "left": left_subtree, "right": right_subtree}
     
     def _compute_medoid(self, X):
         
@@ -46,8 +50,10 @@ class SimilarityDecisionTreeClassifier:
         medoid_idx = np.argmin(distances.sum(axis=1))  
         medoid = X[medoid_idx]  
         distances_to_medoid = distances[:, medoid_idx] 
+
+        mean_distances = np.mean(distances_to_medoid)
         
-        return medoid, distances_to_medoid
+        return medoid, distances, mean_distances
     
     def gower_distance(self, X, Y=None, cat_features=None):
         """
@@ -84,40 +90,6 @@ class SimilarityDecisionTreeClassifier:
         # Average distance per feature
         D /= n_features  
         return D
-
-    
-    def _find_best_threshold(self, distances, y):
-        
-        unique_distances = np.unique(distances)
-        
-        best_threshold = None
-        best_score = float('inf')
-        
-        for threshold in unique_distances:
-            left_mask = distances <= threshold
-            right_mask = ~left_mask
-            
-            if np.sum(left_mask) == 0 or np.sum(right_mask) == 0:
-                continue
-            
-            score = self._gini_index(y[left_mask], y[right_mask])
-            
-            if score < best_score:
-                best_score = score
-                best_threshold = threshold
-        
-        return best_threshold
-
-    
-    def _gini_index(self, left_y, right_y):
-        def gini(y):
-            proportions = np.bincount(y) / len(y)
-            return 1 - np.sum(proportions ** 2)
-        
-        left_size, right_size = len(left_y), len(right_y)
-        total_size = left_size + right_size
-    
-        return (left_size / total_size) * gini(left_y) + (right_size / total_size) * gini(right_y)
     
     def predict(self, X):
         return np.array([self._traverse_tree(x, self.tree) for x in X])
