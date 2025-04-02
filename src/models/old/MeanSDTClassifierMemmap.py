@@ -1,7 +1,6 @@
 import numpy as np
-import utils as utils
 
-class MeanSDTClassifierCondensed:
+class MeanSDTClassifierMemmap:
     
     def __init__(self, isCategorical, max_depth=4):
         self.max_depth = max_depth
@@ -9,7 +8,6 @@ class MeanSDTClassifierCondensed:
         self.tree = None
         self.n_samples = None
         self.n_features = None
-
     
     def fit(self, X, y):
 
@@ -31,8 +29,8 @@ class MeanSDTClassifierCondensed:
         if np.sum(left_indices) == 0 or np.sum(right_indices) == 0:
             return np.bincount(y).argmax()
         
-        left_subtree = self._build_tree(X[left_indices], y[left_indices], indices[left_indices], depth + 1)
-        right_subtree = self._build_tree(X[right_indices], y[right_indices], indices[right_indices], depth + 1)
+        left_subtree = self._build_tree(X, y[left_indices], indices[left_indices], depth + 1)
+        right_subtree = self._build_tree(X, y[right_indices], indices[right_indices], depth + 1)
         
         return {"medoid": medoid, "threshold": mean, "left": left_subtree, "right": right_subtree}
     
@@ -40,12 +38,13 @@ class MeanSDTClassifierCondensed:
         
         distances = np.memmap('distances.dat', dtype='float32', mode='r', shape=(self.n_samples, self.n_samples))
 
-        row_sums = np.zeros(self.n_samples)
+        row_sums = np.full(self.n_samples, np.inf)  
+
         for i in indices:
-            row = distances[i, :]
+            row = distances[i, indices]
             row_sums[i] = np.sum(row) 
 
-        medoid_idx = np.argpartition(row_sums, 1)[0]  
+        medoid_idx = np.argmin(row_sums)
 
         distances_to_medoid = distances[:, medoid_idx] 
         distances_to_medoid = distances_to_medoid[indices] 
@@ -62,39 +61,29 @@ class MeanSDTClassifierCondensed:
         
         for f in range(n_features):
             if self.isCategorical is not None and f in self.isCategorical:  
-                distances[:, :] += (X[:, f, None] != Y[:, f]).astype(float)
+                distances += (X[:, f, None] != Y[:, f]).astype(float)
             else: 
-                distances[:, :] += np.abs(X[:, f, None] - Y[:, f])
+                distances += np.abs(X[:, f, None] - Y[:, f])
 
         
         distances /= n_features
 
-        distances = np.triu(distances) + np.triu(distances, 1).T
 
-
-    def gower_distance(self, X, Y=None):
-
-        X = np.asarray(X)
-        Y = np.asarray(Y) if Y is not None else X  
-            
-        n_samples_x, n_features = X.shape
-        n_samples_y = Y.shape[0]
-
-        D = np.zeros((n_samples_x, n_samples_y))
-
+    def gower_distance(self, x, y):
         
-        for f in range(n_features):
-            if self.isCategorical is not None and f in self.isCategorical:  
-                D[:, :] += (X[:, f, None] != Y[:, f]).astype(float)
-            else: 
-                D[:, :] += np.abs(X[:, f, None] - Y[:, f])
-
+        x = np.asarray(x)
+        y = np.asarray(y)
         
-        D /= n_features
+        n_features = x.shape[0]
+        
+        distances = np.where(
+            self.isCategorical is not None and np.arange(n_features)[:, None] in self.isCategorical,
+            (x != y).astype(float),  
+            np.abs(x - y)         
+        )
 
-        D = np.triu(D) + np.triu(D, 1).T
+        return np.mean(distances)  
 
-        return D
 
     def predict(self, X):
         return np.array([self._traverse_tree(x, self.tree) for x in X])
@@ -104,7 +93,7 @@ class MeanSDTClassifierCondensed:
             return node
     
         distance = self.gower_distance(x.reshape(1, -1), node["medoid"].reshape(1, -1))
-        if distance[0][0] <= node["threshold"]:
+        if distance <= node["threshold"]:
             return self._traverse_tree(x, node["left"])
         else:
             return self._traverse_tree(x, node["right"])

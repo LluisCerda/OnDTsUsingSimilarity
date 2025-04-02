@@ -1,7 +1,7 @@
 from sklearn.datasets import load_wine, load_iris, fetch_california_housing, fetch_openml, load_diabetes, load_breast_cancer, load_digits
 
 import numpy as np
-
+import utils
 
 def _is_numerical(column):
     return np.issubdtype(column.dtype, np.number)
@@ -13,8 +13,11 @@ def data_preprocessing(data):
 
     isCategorical = []
 
+    utils.visualize_dataframe(data)
+
     for i in range(len(data.feature_names)):
         if not _is_numerical(data.data[:, i]):
+            print(f"Column {i} is categorical")
             isCategorical.append(i)  
             _, encoded_col = np.unique(data.data[:, i].astype(str), return_inverse=True)
             data.data[:, i] = encoded_col  

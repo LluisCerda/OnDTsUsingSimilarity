@@ -1,8 +1,8 @@
 from models.STDecisionTreeClassifier import STDecisionTreeClassifier
-from models.STDecisionTreeRegression import STDecisionTreeRegression
 from models.GiniSimilarityDTClassifier import GiniSimilarityDTClassifier
-from models.MeanSimilarityDTClassifier import MeanSimilarityDTClassifier
-from models.MeanSDTClassifierCondensed import MeanSDTClassifierCondensed
+from models.old.MeanSimilarityDTClassifier_D3 import MeanSimilarityDTClassifier_D3
+from models.MeanSimilarityDTClassifier_D2 import MeanSimilarityDTClassifier_D2
+
 from data import load_data
 
 import time
@@ -12,10 +12,14 @@ from sklearn.metrics import accuracy_score, mean_squared_error, mean_absolute_er
 
 import utils
 
+import numpy as np
+
 def pipeline(dataset_i, depth=4):
 
     data_info = load_data(dataset_i)
     data = data_info["data"]
+
+    utils.visualize_dataframe(data)
 
     X_train, X_test, y_train, y_test = train_test_split(data.data, data.target, test_size=0.2, random_state=42)    
 
@@ -28,14 +32,12 @@ def pipeline(dataset_i, depth=4):
     }
 
     STtree = STDecisionTreeClassifier(data_info["categorical"], max_depth=depth)
-    giniSTree = GiniSimilarityDTClassifier(data_info["categorical"], max_depth=depth)
-    meanSTree = MeanSimilarityDTClassifier(data_info["categorical"], max_depth=depth)
-    condensedSTree = MeanSDTClassifierCondensed(data_info["categorical"], max_depth=depth)
-
+    #giniSTree = GiniSimilarityDTClassifier(data_info["categorical"], max_depth=depth)
+    meanSTree_D2 = MeanSimilarityDTClassifier_D2(data_info["categorical"], max_depth=depth)
     #tree = STDecisionTreeRegression(max_depth=depth)
     
-    trees = [STtree, condensedSTree]
-    names = ["STDT","CondensedDT"]
+    trees = [STtree, meanSTree_D2]
+    names = ["STDT", "MeanSDTD2"]
 
     for tree_i in range(len(trees)):
         fit_start_time = time.time()
@@ -44,6 +46,8 @@ def pipeline(dataset_i, depth=4):
         prediction_start_time = time.time()
         y_pred = trees[tree_i].predict(X_test)
         prediction_end_time = time.time()
+
+        print(np.sum(y_pred))
 
         info["Fit time "+names[tree_i]] = fit_end_time - fit_start_time
         info["Prediction time "+names[tree_i]] = prediction_end_time - prediction_start_time
@@ -71,8 +75,9 @@ def pipeline(dataset_i, depth=4):
 if __name__ == "__main__":
 
     results = []
-    for dataset_i in range(1, 5):
-        results.append(pipeline(dataset_i, 8))
+
+    for dataset_i in range(5, 6):
+        results.append(pipeline(dataset_i, 6))
     
     utils.export_to_excel(results)
 

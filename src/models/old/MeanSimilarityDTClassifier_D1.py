@@ -6,10 +6,10 @@ This class is a decision tree classifier that uses the Gower distance to compute
 Treats the mean as threshold.
 
 
-Deprecated: Gower's distance is computed in each node.
+Gower's matrix is computed in each node.
 '''
 
-class MeanSimilarityDTClassifier:
+class MeanSimilarityDTClassifier_D1:
     
     def __init__(self, isCategorical, max_depth=4):
         self.max_depth = max_depth

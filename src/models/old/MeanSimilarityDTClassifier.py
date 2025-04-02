@@ -1,13 +1,18 @@
 import numpy as np
 import utils as utils
 
+"""
+Tries to save time by computing the Gower distance matrix once and then using it to build the tree.
+Deprecated since it doesn't work with large datasets.
+"""
+
 class MeanSimilarityDTClassifier:
     
     def __init__(self, isCategorical, max_depth=4):
         self.max_depth = max_depth
         self.isCategorical = isCategorical
         self.tree = None
-        self.full_distances = None  # Store full precomputed distances
+        self.full_distances = None 
     
     def fit(self, X, y):
         """Compute full distance matrix once and build the tree."""
