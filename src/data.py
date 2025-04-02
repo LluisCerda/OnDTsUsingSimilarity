@@ -1,56 +1,55 @@
 from sklearn.datasets import load_wine, load_iris, fetch_california_housing, fetch_openml, load_diabetes, load_breast_cancer, load_digits
 
 import numpy as np
+import pandas as pd
 import utils
 
-def _is_numerical(column):
-    return np.issubdtype(column.dtype, np.number)
 
-def data_preprocessing(data):
+def data_preprocessing(data, categoricalFeatures):
 
     _, y_encoded = np.unique(data.target, return_inverse=True)
     data.target = y_encoded
 
-    isCategorical = []
-
-    utils.visualize_dataframe(data)
-
-    for i in range(len(data.feature_names)):
-        if not _is_numerical(data.data[:, i]):
-            print(f"Column {i} is categorical")
-            isCategorical.append(i)  
-            _, encoded_col = np.unique(data.data[:, i].astype(str), return_inverse=True)
-            data.data[:, i] = encoded_col  
-
-    if len(isCategorical) == 0:
-        isCategorical = None
-
-    return data, isCategorical
+    for i in range(len(data.data[0])):
+        if i in categoricalFeatures:
+            mask = pd.isna(data.data[:, i]) 
+            data.data[:, i][mask] = "NaN"
+            data.data[:, i]  = np.unique(data.data[:, i], return_inverse=True)[1]
+        else:
+            col = data.data[:, i].astype(float)
+    
+            mean_value = np.nanmean(col)  
+            
+            col[np.isnan(col)] = mean_value  
+            data.data[:, i] = col
+    
+    return data
 
 def load_data(num):
 
     #CLASSIFICATION ONLY NUMERICAL
     if num == 1: 
-        data, isCategorical = data_preprocessing(load_iris())
-        return {"data": data, "categorical": isCategorical, "name": "Iris", "filename": "iris.html", "task": "classification"}
+        categoricalFeatures = None
+        return {"data": load_iris(), "categorical": categoricalFeatures, "name": "Iris", "filename": "iris.html", "task": "classification"}
     
     if num == 2: 
-        data, isCategorical = data_preprocessing(load_wine())
-        return {"data": data, "categorical": isCategorical, "name": "Wine", "filename": "wine.html", "task": "classification"}
+        categoricalFeatures = None
+        return {"data": load_wine(), "categorical": categoricalFeatures, "name": "Wine", "filename": "wine.html", "task": "classification"}
     
     if num == 3: 
-        data, isCategorical = data_preprocessing(load_breast_cancer())
-        return {"data": data, "categorical": isCategorical, "name": "Breast Cancer", "filename": "breast_cancer.html", "task": "classification"}
+        categoricalFeatures = None
+        return {"data": load_breast_cancer(), "categorical": categoricalFeatures, "name": "Breast Cancer", "filename": "breast_cancer.html", "task": "classification"}
     
     if num == 4: 
-        data, isCategorical = data_preprocessing(load_digits())
-        return {"data": data, "categorical": isCategorical, "name": "Digits", "filename": "digits.html", "task": "classification"}
+        categoricalFeatures = None
+        return {"data": load_digits(), "categorical": categoricalFeatures, "name": "Digits", "filename": "digits.html", "task": "classification"}
     
 
     #CLASSIFICATION NUMERICAL AND CATEGORICAL
     if num == 5: 
-        data, isCategorical = data_preprocessing(fetch_openml("adult", version=2, as_frame=False))
-        return {"data": data, "categorical": isCategorical, "name": "Adult", "filename": "adult.html", "task": "classification"}
+        categoricalFeatures = [1, 3, 5, 6, 7, 8, 9, 13]
+        data = data_preprocessing(fetch_openml("adult", version=2, as_frame=False), categoricalFeatures)
+        return {"data": data, "categorical": categoricalFeatures, "name": "Adult", "filename": "adult.html", "task": "classification"}
     
 
     #REGRESSION ONLY NUMERICAL

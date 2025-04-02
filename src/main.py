@@ -1,8 +1,6 @@
 from models.STDecisionTreeClassifier import STDecisionTreeClassifier
 from models.GiniSimilarityDTClassifier import GiniSimilarityDTClassifier
-from models.old.MeanSimilarityDTClassifier_D3 import MeanSimilarityDTClassifier_D3
-from models.MeanSimilarityDTClassifier_D2 import MeanSimilarityDTClassifier_D2
-
+from models.MeanSimilarityDTClassifier_D4 import MeanSimilarityDTClassifier_D4
 from data import load_data
 
 import time
@@ -19,8 +17,6 @@ def pipeline(dataset_i, depth=4):
     data_info = load_data(dataset_i)
     data = data_info["data"]
 
-    utils.visualize_dataframe(data)
-
     X_train, X_test, y_train, y_test = train_test_split(data.data, data.target, test_size=0.2, random_state=42)    
 
     info = {
@@ -33,11 +29,11 @@ def pipeline(dataset_i, depth=4):
 
     STtree = STDecisionTreeClassifier(data_info["categorical"], max_depth=depth)
     #giniSTree = GiniSimilarityDTClassifier(data_info["categorical"], max_depth=depth)
-    meanSTree_D2 = MeanSimilarityDTClassifier_D2(data_info["categorical"], max_depth=depth)
+    meanSTree_D4 = MeanSimilarityDTClassifier_D4(data_info["categorical"], max_depth=depth)
     #tree = STDecisionTreeRegression(max_depth=depth)
     
-    trees = [STtree, meanSTree_D2]
-    names = ["STDT", "MeanSDTD2"]
+    trees = [meanSTree_D4]
+    names = ["MeanSDTD5"]
 
     for tree_i in range(len(trees)):
         fit_start_time = time.time()
@@ -76,7 +72,7 @@ if __name__ == "__main__":
 
     results = []
 
-    for dataset_i in range(5, 6):
+    for dataset_i in range(1, 6):
         results.append(pipeline(dataset_i, 6))
     
     utils.export_to_excel(results)
