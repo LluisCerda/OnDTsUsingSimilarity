@@ -73,7 +73,9 @@ if __name__ == "__main__":
     results = []
 
     for dataset_i in range(1, 6):
-        results.append(pipeline(dataset_i, 6))
+        for depth in range(4, 10):
+            print(f"Dataset {dataset_i} - Depth {depth}")
+            results.append(pipeline(dataset_i, depth))
     
     utils.export_to_excel(results)
 

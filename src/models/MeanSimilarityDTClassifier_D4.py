@@ -12,12 +12,18 @@ Gower's distance is computed in each node.
 
 class MeanSimilarityDTClassifier_D4:
     
-    def __init__(self, isCategorical, max_depth=4):
+    def __init__(self, categoricalFeatures, max_depth=4):
         self.max_depth = max_depth
-        self.isCategorical = isCategorical
+        self.categoricalFeatures = categoricalFeatures
+        self.isCategorical = None
         self.tree = None
     
     def fit(self, X, y):
+
+        self.isCategorical = np.zeros(X.shape[1], dtype=bool)
+        if self.categoricalFeatures is not None:
+            self.isCategorical[self.categoricalFeatures] = True 
+
         self.tree = self._build_tree(X, y, depth=0)
     
     def _build_tree(self, X, y, depth):
@@ -47,7 +53,7 @@ class MeanSimilarityDTClassifier_D4:
         medoid = X[medoid_idx]  
         distances_to_medoid = self.gower_distances_to_medoid(X, medoid_idx) 
 
-        mean_distances = np.mean(distances_to_medoid)
+        mean_distances = np.median(distances_to_medoid) #mean
         
         return medoid, distances_to_medoid, mean_distances
 
@@ -76,17 +82,14 @@ class MeanSimilarityDTClassifier_D4:
 
     
     def gower_distances(self, X):
+
         X = np.asarray(X)
-        n_samples, n_features = X.shape
+        n_samples = X.shape[0]
         
         sum_distances = np.zeros(n_samples)  
-
-        categorical_mask = np.zeros(n_features, dtype=bool)
-        if self.isCategorical is not None:
-            categorical_mask[self.isCategorical] = True 
         
-        X_num = X[:, ~categorical_mask].astype(float)
-        X_cat = X[:, categorical_mask]
+        X_num = X[:, ~self.isCategorical].astype(float)
+        X_cat = X[:, self.isCategorical]
         
         num_features = X_num.shape[1]  
         cat_features = X_cat.shape[1]  
@@ -94,17 +97,16 @@ class MeanSimilarityDTClassifier_D4:
         for i in range(n_samples):
             sample_time = time.time()
 
-            
             num_differences = np.abs(X_num[i] - X_num) 
-            num_differences = np.sum(num_differences, axis=1) / num_features 
+            num_differences = np.sum(num_differences, axis=1)
 
-            cat_differences = np.sum(X_cat[i] != X_cat, axis=1) / cat_features if cat_features > 0 else 0
+            cat_differences = np.sum(X_cat[i] != X_cat, axis=1)
 
-            row_distances = num_differences + cat_differences
+            row_distances = (num_differences + cat_differences)
             
-            sum_distances[i] = np.sum(row_distances)
+            sum_distances[i] = np.sum(row_distances) / (num_features + cat_features)
 
-            if i % 100 == 0: 
+            if i % 1000 == 0: 
                 sample_time = time.time() - sample_time
                 remaining_time = sample_time * (n_samples - i - 1)
                 print(f"Sample {i}/{n_samples} - Estimated remaining time: {remaining_time:.2f} sec ({remaining_time/60:.2f} min)")
@@ -112,21 +114,28 @@ class MeanSimilarityDTClassifier_D4:
         return sum_distances
 
     def gower_distances_to_medoid(self, X, medoid_idx):
+        
         X = np.asarray(X)
-        n_samples, n_features = X.shape
-
         medoid = X[medoid_idx]  
-        distances = np.zeros(n_samples)  
 
-        for f in range(n_features):
-            if self.isCategorical is not None and f in self.isCategorical:
-                distances += (medoid[f] != X[:, f]).astype(float)  
-            else:
-                distances += np.abs(medoid[f] - X[:, f]).astype(float)
+        X_num = X[:, ~self.isCategorical].astype(float)
+        X_cat = X[:, self.isCategorical]
 
-        distances /= n_features  
+        Medoid_num = medoid[~self.isCategorical].astype(float)
+        Medoid_cat = medoid[self.isCategorical]
+        
+        num_features = X_num.shape[1]  
+        cat_features = X_cat.shape[1]  
 
-        return distances  
+        
+        num_differences = np.abs(X_num - Medoid_num) 
+        num_differences = np.sum(num_differences, axis=1)
+
+        cat_differences = np.sum(X_cat != Medoid_cat, axis=1)
+
+        distances = (num_differences + cat_differences) / (num_features + cat_features)
+
+        return distances
 
 
     def gower_distance(self, x, y):
@@ -134,10 +143,8 @@ class MeanSimilarityDTClassifier_D4:
         x = np.asarray(x)
         y = np.asarray(y)
         
-        n_features = x.shape[0]
-        
         distances = np.where(
-            self.isCategorical is not None and np.arange(n_features)[:, None] in self.isCategorical,
+            self.isCategorical[:, None],
             (x != y).astype(float),  
             np.abs(x - y)         
         )
