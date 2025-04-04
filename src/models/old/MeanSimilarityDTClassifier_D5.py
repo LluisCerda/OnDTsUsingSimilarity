@@ -1,5 +1,4 @@
 import numpy as np
-import utils as utils
 import time
 
 '''
@@ -7,31 +6,41 @@ This class is a decision tree classifier that uses the Gower distance to compute
 Treats the mean as threshold.
 
 
-Gower's distance is computed in each node.
+Real gower's distance.
 '''
 
-class MeanSimilarityDTClassifier_D4:
+class MeanSimilarityDTClassifier_D5:
     
     def __init__(self, categoricalFeatures, max_depth=4):
         self.max_depth = max_depth
         self.categoricalFeatures = categoricalFeatures
         self.isCategorical = None
         self.tree = None
+        self.range = None
     
     def fit(self, X, y):
 
+        #Compute categorical mask
         self.isCategorical = np.zeros(X.shape[1], dtype=bool)
         if self.categoricalFeatures is not None:
             self.isCategorical[self.categoricalFeatures] = True 
+
+        #Compute range of each feature
+        self.range = np.zeros(X.shape[1])
+        for i in range(X.shape[1]):
+            if self.isCategorical[i]:
+                self.range[i] = 1  
+            else:
+                max_f = np.nanmax(X[:, i])
+                min_f = np.nanmin(X[:, i])
+                self.range[i] = max_f - min_f if max_f > min_f else 1
 
         self.tree = self._build_tree(X, y, depth=0)
     
     def _build_tree(self, X, y, depth):
         
-
         if depth >= self.max_depth or len(np.unique(y)) == 1:
             return np.bincount(y).argmax()
-        
         
         medoid, distances, mean = self._compute_medoid(X)
         left_indices = distances <= mean
@@ -57,29 +66,6 @@ class MeanSimilarityDTClassifier_D4:
         
         return medoid, distances_to_medoid, mean_distances
 
-
-    def gower_matrix(X, categoricalFeatures):
-        X = np.array(X)
-        n_samples, n_features = X.shape
-        D = np.zeros((n_samples, n_samples))
-        
-        for i in range(n_samples):
-            for j in range(i + 1, n_samples):
-                diff = np.zeros(n_features)
-                
-                for f in range(n_features):
-                    if categoricalFeatures[f]:  # Categorical feature
-                        diff[f] = 0 if X[i, f] == X[j, f] else 1
-                    else:  # Numerical feature
-                        max_f = np.nanmax(X[:, f])
-                        min_f = np.nanmin(X[:, f])
-                        range_f = max_f - min_f if max_f > min_f else 1  # Avoid division by zero
-                        diff[f] = abs(X[i, f] - X[j, f]) / range_f
-                
-                D[i, j] = D[j, i] = np.mean(diff)
-        
-        return D
-
     
     def gower_distances(self, X):
 
@@ -97,7 +83,8 @@ class MeanSimilarityDTClassifier_D4:
         for i in range(n_samples):
             sample_time = time.time()
 
-            num_differences = np.abs(X_num[i] - X_num) 
+            ones = np.ones(X_num.shape[1])
+            num_differences = ones - (np.abs(X_num[i] - X_num) / self.range[~self.isCategorical])
             num_differences = np.sum(num_differences, axis=1)
 
             cat_differences = np.sum(X_cat[i] != X_cat, axis=1)
@@ -127,8 +114,8 @@ class MeanSimilarityDTClassifier_D4:
         num_features = X_num.shape[1]  
         cat_features = X_cat.shape[1]  
 
-        
-        num_differences = np.abs(X_num - Medoid_num) 
+        ones = np.ones(X_num.shape[1])
+        num_differences = ones - (np.abs(X_num - Medoid_num) / self.range[~self.isCategorical])
         num_differences = np.sum(num_differences, axis=1)
 
         cat_differences = np.sum(X_cat != Medoid_cat, axis=1)
@@ -146,7 +133,7 @@ class MeanSimilarityDTClassifier_D4:
         distances = np.where(
             self.isCategorical[:, None],
             (x != y).astype(float),  
-            np.abs(x - y)         
+            1 - (np.abs(x - y) / self.range[~self.isCategorical])         
         )
 
         return np.mean(distances)  

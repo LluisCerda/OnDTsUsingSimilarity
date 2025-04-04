@@ -1,6 +1,8 @@
 from models.STDecisionTreeClassifier import STDecisionTreeClassifier
 from models.GiniSimilarityDTClassifier import GiniSimilarityDTClassifier
-from models.MeanSimilarityDTClassifier_D4 import MeanSimilarityDTClassifier_D4
+from models.MeanSimilarityDTClassifier_D6 import MeanSimilarityDTClassifier_D6
+from models.MeanSimilarityDTClassifier_D7 import MeanSimilarityDTClassifier_D7
+from sklearn.tree import DecisionTreeClassifier
 from data import load_data
 
 import time
@@ -27,13 +29,13 @@ def pipeline(dataset_i, depth=4):
         "depth": depth
     }
 
-    STtree = STDecisionTreeClassifier(data_info["categorical"], max_depth=depth)
-    #giniSTree = GiniSimilarityDTClassifier(data_info["categorical"], max_depth=depth)
-    meanSTree_D4 = MeanSimilarityDTClassifier_D4(data_info["categorical"], max_depth=depth)
-    #tree = STDecisionTreeRegression(max_depth=depth)
-    
-    trees = [meanSTree_D4]
-    names = ["MeanSDTD5"]
+
+    meanSTree_D6 = MeanSimilarityDTClassifier_D6(data_info["categorical"], max_depth=depth)
+    meanSTree_D7 = MeanSimilarityDTClassifier_D7(data_info["categorical"], max_depth=depth)
+    sktree = DecisionTreeClassifier(max_depth=depth)
+
+    trees = [sktree, meanSTree_D6, meanSTree_D7]
+    names = ["sktree", "MeanSDTD6", "MeanSDTD7"]
 
     for tree_i in range(len(trees)):
         fit_start_time = time.time()
@@ -42,8 +44,6 @@ def pipeline(dataset_i, depth=4):
         prediction_start_time = time.time()
         y_pred = trees[tree_i].predict(X_test)
         prediction_end_time = time.time()
-
-        print(np.sum(y_pred))
 
         info["Fit time "+names[tree_i]] = fit_end_time - fit_start_time
         info["Prediction time "+names[tree_i]] = prediction_end_time - prediction_start_time
@@ -72,10 +72,9 @@ if __name__ == "__main__":
 
     results = []
 
-    for dataset_i in range(1, 6):
-        for depth in range(4, 10):
-            print(f"Dataset {dataset_i} - Depth {depth}")
-            results.append(pipeline(dataset_i, depth))
+    for dataset_i in range(1, 8):
+        print("Starting dataset " + str(dataset_i))
+        results.append(pipeline(dataset_i, 9))
     
     utils.export_to_excel(results)
 

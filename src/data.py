@@ -44,39 +44,50 @@ def load_data(num):
         categoricalFeatures = None
         return {"data": load_digits(), "categorical": categoricalFeatures, "name": "Digits", "filename": "digits.html", "task": "classification"}
     
+    if num == 5: 
+    
+        categoricalFeatures = None
+        data = fetch_openml(name="banknote-authentication", as_frame=False, version=1)
+        data.target = data.target.astype(int)
+        return {"data": data, "categorical": categoricalFeatures, "name": "BankNote Authentication", "filename": "banknote_authentication.html", "task": "classification"}
+    
+    if num == 6: 
+    
+        categoricalFeatures = None
+        #13910 rows, 129 columns
+        data = fetch_openml(name="gas-drift", as_frame=False, version=1)
+        data.target = data.target.astype(int)
+        return {"data": data, "categorical": categoricalFeatures, "name": "Gas Drift", "filename": "gas_drift.html", "task": "classification"}
+
+
+    if num == 7: 
+
+        #58000 rows, 9 columns
+        categoricalFeatures = None
+        data = fetch_openml(name="shuttle", as_frame=False, version=1)
+        data.target = data.target.astype(int)
+        return {"data": data, "categorical": categoricalFeatures, "name": "Shuttle", "filename": "shuttle.html", "task": "classification"}
+    
 
     #CLASSIFICATION NUMERICAL AND CATEGORICAL
-    if num == 5: 
+    if num == 8: 
         categoricalFeatures = [1, 3, 5, 6, 7, 8, 9, 13]
         data = data_preprocessing(fetch_openml("adult", version=2, as_frame=False), categoricalFeatures)
         return {"data": data, "categorical": categoricalFeatures, "name": "Adult", "filename": "adult.html", "task": "classification"}
     
 
     #REGRESSION ONLY NUMERICAL
-    if num == 6: 
+    if num == 9: 
         data, isCategorical = data_preprocessing(load_diabetes())
         return {"data": data, "categorical": isCategorical, "name": "Diabetes Progression", "filename": "diabetes_progression.html", "task": "regression"}
     
-    if num == 7: 
+    if num == 10: 
         data, isCategorical = data_preprocessing(fetch_openml(name="boston", as_frame=False, version=1))
         return {"data": data, "categorical": isCategorical, "name": "Boston Housing", "filename": "boston_housing.html", "task": "regression"}
     
-    #SLOW
-    if num == 8: 
+    if num == 11: 
+
         data, isCategorical = data_preprocessing(fetch_california_housing())
         return {"data": data, "categorical": isCategorical, "name": "California Housing", "filename": "california_housing.html", "task": "regression"}
     
-
-    #LIMPIAR
-    if num == 9: 
-        data, isCategorical = data_preprocessing(fetch_openml(name="banknote-authentication", as_frame=False, version=1))
-        return {"data": data, "categorical": isCategorical, "name": "BankNote Authentication", "filename": "banknote_authentication.html", "task": "classification"}
-    
-    if num == 10: 
-        data, isCategorical = data_preprocessing(fetch_openml(name="shuttle", as_frame=False, version=1))
-        return {"data": data, "categorical": isCategorical, "name": "Shuttle", "filename": "shuttle.html", "task": "classification"}
-    
-    if num == 11: 
-        data, isCategorical = data_preprocessing(fetch_openml(name="gas-drift", as_frame=False, version=1))
-        return {"data": data, "categorical": isCategorical, "name": "Gas Drift", "filename": "gas_drift.html", "task": "classification"}
     
