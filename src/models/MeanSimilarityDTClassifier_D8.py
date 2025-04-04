@@ -1,22 +1,24 @@
 import numpy as np
-import time
+from joblib import Parallel, delayed
+from numba import jit
 
 '''
 This class is a decision tree classifier that uses the Gower distance to compute the similarity between samples.
 Treats the mean as threshold.
 
 
-D6 with improved transverse tree.
+D7 with parallelization.
 '''
 
-class MeanSimilarityDTClassifier_D7:
+class MeanSimilarityDTClassifier_D8:
     
-    def __init__(self, categoricalFeatures, max_depth=4):
+    def __init__(self, categoricalFeatures, max_depth=4, n_jobs=-1):
         self.max_depth = max_depth
         self.categoricalFeatures = categoricalFeatures
         self.isCategorical = None
         self.tree = None
         self.numericFeaturesRanges = None
+        self.n_jobs = n_jobs
     
     def fit(self, X, y):
 
@@ -42,7 +44,7 @@ class MeanSimilarityDTClassifier_D7:
         prototype_idx = np.random.randint(0, X.shape[0])
         prototype = X[prototype_idx]
 
-        similaritiesToPrototype = self.gower_similarity_to_prototype(X, prototype) 
+        similaritiesToPrototype = gower_similarity_to_prototype(self.isCategorical, self.numericFeaturesRanges, X, prototype) 
 
         threshold = np.mean(similaritiesToPrototype) #mean?
         
@@ -52,21 +54,12 @@ class MeanSimilarityDTClassifier_D7:
         if np.sum(leftMask) == 0 or np.sum(rightMask) == 0:
             return np.bincount(y).argmax()
         
-        left_subtree = self._build_tree(X[leftMask], y[leftMask], depth + 1)
-        right_subtree = self._build_tree(X[rightMask], y[rightMask], depth + 1)
+        results = Parallel(n_jobs=self.n_jobs)(
+            delayed(self._build_tree)(X[mask], y[mask], depth + 1)
+            for mask in [leftMask, rightMask]
+        )
         
-        return {"prototype": prototype, "threshold": threshold, "left": left_subtree, "right": right_subtree}
-    
-    def gower_similarity_to_prototype(self, X, prototype):
-
-        numericaDifferences = 1 - (np.abs(X[:,~self.isCategorical] - prototype[~self.isCategorical]) / self.numericFeaturesRanges)
-        numericaDifferences = np.sum(numericaDifferences, axis=1)
-
-        categoricalDifferences = np.count_nonzero(X[:,self.isCategorical] != prototype[self.isCategorical], axis=1)
-
-        similarities = (numericaDifferences + categoricalDifferences) / X.shape[1]
-
-        return similarities
+        return {"prototype": prototype, "threshold": threshold, "left": results[0], "right": results[1]}
     
     def predict(self, X):
 
@@ -82,7 +75,7 @@ class MeanSimilarityDTClassifier_D7:
         if not isinstance(node, dict):
             return {node: indices} 
 
-        similaritiesToPrototype = self.gower_similarity_to_prototype(X, node["prototype"])
+        similaritiesToPrototype = gower_similarity_to_prototype(self.isCategorical, self.numericFeaturesRanges, X, node["prototype"])
         
         leftMask = similaritiesToPrototype <= node["threshold"]
         rightMask = ~leftMask
@@ -98,3 +91,16 @@ class MeanSimilarityDTClassifier_D7:
             leftResult[key] = np.concatenate((leftResult[key], rightResult[key])) if key in leftResult else rightResult[key]
 
         return leftResult 
+
+
+@jit(nopython=True)
+def gower_similarity_to_prototype(isCategorical, numericFeaturesRanges, X, prototype):
+
+    numericaDifferences = 1 - (np.abs(X[:,~isCategorical] - prototype[~isCategorical]) / numericFeaturesRanges)
+    numericaDifferences = np.sum(numericaDifferences, axis=1)
+
+    categoricalDifferences = np.count_nonzero(X[:,isCategorical] != prototype[isCategorical], axis=1)
+
+    similarities = (numericaDifferences + categoricalDifferences) / X.shape[1]
+
+    return similarities
