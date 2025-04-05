@@ -1,5 +1,4 @@
 from models.MeanSimilarityDTClassifier_D7 import MeanSimilarityDTClassifier_D7
-from models.MeanSimilarityDTClassifier_D8 import MeanSimilarityDTClassifier_D8
 from sklearn.tree import DecisionTreeClassifier
 from data import load_data
 
@@ -27,11 +26,10 @@ def pipeline(dataset_i, depth=4):
 
 
     meanSTree_D7 = MeanSimilarityDTClassifier_D7(data_info["categorical"], max_depth=depth)
-    meanSTree_D8 = MeanSimilarityDTClassifier_D8(data_info["categorical"], max_depth=depth)
     sktree = DecisionTreeClassifier(max_depth=depth)
 
-    trees = [meanSTree_D7, meanSTree_D8]
-    names = ["MeanSDTD7", "MeanSDTD8"]
+    trees = [meanSTree_D7]
+    names = ["MeanSDTD7"]
 
     for tree_i in range(len(trees)):
         fit_start_time = time.time()
@@ -68,8 +66,8 @@ if __name__ == "__main__":
 
     results = []
 
-    for dataset_i in range(1, 8):
-        for depth in range(6,7):
+    for dataset_i in range(1, 9):
+        for depth in range(10,11):
             print("Starting dataset " + str(dataset_i) + " with depth " + str(depth))
             results.append(pipeline(dataset_i, depth))
     
