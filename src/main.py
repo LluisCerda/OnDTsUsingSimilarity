@@ -1,4 +1,10 @@
 from models.MeanSimilarityDTClassifier_D7 import MeanSimilarityDTClassifier_D7
+from models.MeanSimilarityDTClassifier_D8 import MeanSimilarityDTClassifier_D8
+from models.MeanSimilarityDTClassifier_D9 import MeanSimilarityDTClassifier_D9
+from models.old.MeanSimilarityDTClassifier_D6 import MeanSimilarityDTClassifier_D6
+
+
+
 from sklearn.tree import DecisionTreeClassifier
 from data import load_data
 
@@ -24,14 +30,19 @@ def pipeline(dataset_i, depth=4):
         "depth": depth
     }
 
+    if len(data.data) * len(data.feature_names) < 500000:
+        meanSTree = MeanSimilarityDTClassifier_D7(data_info["categorical"], max_depth=depth)
+    else: meanSTree = MeanSimilarityDTClassifier_D8(data_info["categorical"], max_depth=depth)
+    meanSTree_D9 = MeanSimilarityDTClassifier_D9(data_info["categorical"], max_depth=depth)
+    
+    #sktree = DecisionTreeClassifier(max_depth=depth)
 
-    meanSTree_D7 = MeanSimilarityDTClassifier_D7(data_info["categorical"], max_depth=depth)
-    sktree = DecisionTreeClassifier(max_depth=depth)
 
-    trees = [meanSTree_D7]
-    names = ["MeanSDTD7"]
+    trees = [meanSTree, meanSTree_D9]
+    names = ["meanSTree", "meanSTree_D9"]
 
     for tree_i in range(len(trees)):
+
         fit_start_time = time.time()
         trees[tree_i].fit(X_train, y_train)
         fit_end_time = time.time()
@@ -43,15 +54,8 @@ def pipeline(dataset_i, depth=4):
         info["Prediction time "+names[tree_i]] = prediction_end_time - prediction_start_time
         info["Score "+names[tree_i]] = accuracy_score(y_test, y_pred) if data_info["task"] == "classification" else mean_squared_error(y_test, y_pred)
     
-
-    # visualize_tree_pyvis(tree.tree,  output_file="STDT.html", Sim_tree=False)
-    # visualize_tree_pyvis(Stree.tree, output_file="SIMDT.html", Sim_tree=True)
-
-    #if data_info["task"] == "classification":
-    #    tree.visualize_tree_pyvis(output_file="output/"+data_info["filename"], feature_names=data.feature_names, class_names=data.target_names)
-    #else: 
-    #    tree.visualize_tree_pyvis(output_file="output/"+data_info["filename"], feature_names=data.feature_names)
-
+    #utils.visualize_tree_pyvis(meanSTree_D9.tree, output_file="output/"+data_info["filename"], Sim_tree=True)
+    
     # st_depth, st_nodes = utils.tree_depth_and_nodes(tree.tree)
     # sim_depth, sim_nodes = utils.tree_depth_and_nodes(Stree.tree)
 
@@ -66,12 +70,14 @@ if __name__ == "__main__":
 
     results = []
 
-    for dataset_i in range(1, 9):
-        for depth in range(10,11):
-            print("Starting dataset " + str(dataset_i) + " with depth " + str(depth))
-            results.append(pipeline(dataset_i, depth))
+    for dataset_i in range(8,10):
+        for depth in range(1,11):
+            print("Starting dataset " + str(dataset_i) + " with depth " + str(10))
+            results.append(pipeline(dataset_i, 10))
     
     utils.export_to_excel(results)
+
+        
 
 
 

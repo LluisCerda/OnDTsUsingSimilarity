@@ -1,7 +1,5 @@
 import numpy as np
 from joblib import Parallel, delayed
-from numba import jit
-
 '''
 This class is a decision tree classifier that uses the Gower distance to compute the similarity between samples.
 Treats the mean as threshold.
@@ -31,7 +29,7 @@ class MeanSimilarityDTClassifier_D8:
             if not self.isCategorical[i]:
                 max_f = np.nanmax(X[:, i])
                 min_f = np.nanmin(X[:, i])
-                self.numericFeaturesRanges[i] = max_f - min_f if max_f > min_f else 1
+                self.numericFeaturesRanges[i] = np.abs(max_f - min_f) if max_f > min_f else 1
         self.numericFeaturesRanges = self.numericFeaturesRanges[~self.isCategorical]
 
         self.tree = self._build_tree(X, y, depth=0)
@@ -44,7 +42,7 @@ class MeanSimilarityDTClassifier_D8:
         prototype_idx = np.random.randint(0, X.shape[0])
         prototype = X[prototype_idx]
 
-        similaritiesToPrototype = gower_similarity_to_prototype(self.isCategorical, self.numericFeaturesRanges, X, prototype) 
+        similaritiesToPrototype = self.gower_similarity_to_prototype(self.isCategorical, self.numericFeaturesRanges, X, prototype) 
 
         threshold = np.mean(similaritiesToPrototype) #mean?
         
@@ -54,10 +52,16 @@ class MeanSimilarityDTClassifier_D8:
         if np.sum(leftMask) == 0 or np.sum(rightMask) == 0:
             return np.bincount(y).argmax()
         
-        results = Parallel(n_jobs=self.n_jobs)(
-            delayed(self._build_tree)(X[mask], y[mask], depth + 1)
-            for mask in [leftMask, rightMask]
-        )
+        if X.shape[0] * X.shape[1] >= 100000:
+            results = Parallel(n_jobs=self.n_jobs)(
+                delayed(self._build_tree)(X[mask], y[mask], depth + 1)
+                for mask in [leftMask, rightMask]
+            )
+        else:
+            results = [
+                self._build_tree(X[leftMask], y[leftMask], depth + 1),
+                self._build_tree(X[rightMask], y[rightMask], depth + 1)
+            ]
         
         return {"prototype": prototype, "threshold": threshold, "left": results[0], "right": results[1]}
     
@@ -70,12 +74,23 @@ class MeanSimilarityDTClassifier_D8:
             y_pred[indices] = label 
 
         return y_pred
+    
+    def gower_similarity_to_prototype(self, isCategorical, numericFeaturesRanges, X, prototype):
+
+        numericaDifferences = 1 - (np.abs(X[:,~isCategorical] - prototype[~isCategorical]) / numericFeaturesRanges)
+        numericaDifferences = np.sum(numericaDifferences, axis=1)
+
+        categoricalDifferences = np.count_nonzero(X[:,isCategorical] != prototype[isCategorical], axis=1)
+
+        similarities = (numericaDifferences + categoricalDifferences) / X.shape[1]
+
+        return similarities
 
     def _traverse_tree(self, X, node, indices):
         if not isinstance(node, dict):
             return {node: indices} 
 
-        similaritiesToPrototype = gower_similarity_to_prototype(self.isCategorical, self.numericFeaturesRanges, X, node["prototype"])
+        similaritiesToPrototype = self.gower_similarity_to_prototype(self.isCategorical, self.numericFeaturesRanges, X, node["prototype"])
         
         leftMask = similaritiesToPrototype <= node["threshold"]
         rightMask = ~leftMask
@@ -93,14 +108,3 @@ class MeanSimilarityDTClassifier_D8:
         return leftResult 
 
 
-@jit(nopython=True)
-def gower_similarity_to_prototype(isCategorical, numericFeaturesRanges, X, prototype):
-
-    numericaDifferences = 1 - (np.abs(X[:,~isCategorical] - prototype[~isCategorical]) / numericFeaturesRanges)
-    numericaDifferences = np.sum(numericaDifferences, axis=1)
-
-    categoricalDifferences = np.count_nonzero(X[:,isCategorical] != prototype[isCategorical], axis=1)
-
-    similarities = (numericaDifferences + categoricalDifferences) / X.shape[1]
-
-    return similarities

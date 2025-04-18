@@ -12,7 +12,7 @@ def visualize_tree_pyvis(tree, output_file="tree.html", feature_names=None, clas
             if feature_names is not None:
                 node_label = f"{feature_names[node['feature']]} ≤ {node['threshold']}"
             elif not Sim_tree: node_label = f"Feature {node['feature']} ≤ {node['threshold']}"
-            else: node_label = f"Medoid {node['medoid']} ≤ {node['threshold']}"
+            else: node_label = f"Prototype Sim ≤ {node['threshold']}"
 
             # Root node
             if is_root:

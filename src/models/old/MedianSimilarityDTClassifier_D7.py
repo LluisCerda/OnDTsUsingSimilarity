@@ -4,10 +4,11 @@ import numpy as np
 This class is a decision tree classifier that uses the Gower distance to compute the similarity between samples.
 Treats the mean as threshold.
 
-D6 with improved transverse tree.
+
+D7 with median, deprecated since mean has same results but it's faster.
 '''
 
-class MeanSimilarityDTClassifier_D7:
+class MedianSimilarityDTClassifier_D7:
     
     def __init__(self, categoricalFeatures, max_depth=4):
         self.max_depth = max_depth
@@ -42,7 +43,7 @@ class MeanSimilarityDTClassifier_D7:
 
         similaritiesToPrototype = self.gower_similarity_to_prototype(X, prototype) 
 
-        threshold = np.mean(similaritiesToPrototype) 
+        threshold = np.median(similaritiesToPrototype) #
         
         leftMask = similaritiesToPrototype <= threshold
         rightMask = ~leftMask
