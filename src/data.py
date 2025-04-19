@@ -66,6 +66,7 @@ def load_data(num):
         return {"data": data, "categorical": categoricalFeatures, "name": "Adult", "filename": "adult.html", "task": "classification"}
     
     if num == 9: 
+
         categoricalFeatures = [1,2,3,4,5,6,7,8,9,10,11,12,18]
         data = data_preprocessing( fetch_openml(data_id=269, as_frame=False, parser="auto"), categoricalFeatures)
         return {"data": data, "categorical": categoricalFeatures, "name": "Hepatitis", "filename": "hepatitis.html", "task": "classification"}
@@ -73,15 +74,24 @@ def load_data(num):
 
     #REGRESSION ONLY NUMERICAL
     if num == 10: 
-        data, isCategorical = data_preprocessing(load_diabetes())
-        return {"data": data, "categorical": isCategorical, "name": "Diabetes Progression", "filename": "diabetes_progression.html", "task": "regression"}
+        #442 rows, 10 columns
+        #Real from 25 to 346
+        categoricalFeatures = None
+        data = load_diabetes()
+        return {"data": data, "categorical": categoricalFeatures, "name": "Diabetes Progression", "filename": "diabetes_progression.html", "task": "regression"}
     
     if num == 11: 
-        data, isCategorical = data_preprocessing(fetch_openml(name="boston", as_frame=False, version=1))
-        return {"data": data, "categorical": isCategorical, "name": "Boston Housing", "filename": "boston_housing.html", "task": "regression"}
+        #506 rows, 14 columns
+        #Real from 0 to 228
+        categoricalFeatures = [3, 8]
+        data = data_preprocessing(fetch_openml(name="boston", as_frame=False, version=1), categoricalFeatures)
+        return {"data": data, "categorical": categoricalFeatures, "name": "Boston Housing", "filename": "boston_housing.html", "task": "regression"}
     
     if num == 12: 
-        data, isCategorical = data_preprocessing(fetch_california_housing())
-        return {"data": data, "categorical": isCategorical, "name": "California Housing", "filename": "california_housing.html", "task": "regression"}
+        #20640 rows, 8 columns
+        #Real from 0.15 to 5
+        categoricalFeatures = None
+        data = fetch_california_housing()
+        return {"data": data, "categorical": categoricalFeatures, "name": "California Housing", "filename": "california_housing.html", "task": "regression"}
     
     

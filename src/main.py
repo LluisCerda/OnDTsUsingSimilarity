@@ -1,11 +1,9 @@
-from models.MeanSimilarityDTClassifier_D7 import MeanSimilarityDTClassifier_D7
 from models.MeanSimilarityDTClassifier_D8 import MeanSimilarityDTClassifier_D8
-from models.MeanSimilarityDTClassifier_D9 import MeanSimilarityDTClassifier_D9
-from models.old.MeanSimilarityDTClassifier_D6 import MeanSimilarityDTClassifier_D6
-
+from models.SimilarityDecisionTree_D10 import SimilarityDecisionTree_D10
 
 
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeRegressor
 from data import load_data
 
 import time
@@ -19,27 +17,27 @@ def pipeline(dataset_i, depth=4):
 
     data_info = load_data(dataset_i)
     data = data_info["data"]
+    isClassifierTask = data_info["task"] == "classification"
 
     X_train, X_test, y_train, y_test = train_test_split(data.data, data.target, test_size=0.2, random_state=42)    
 
     info = {
         "dataset": data_info["name"],
-        "task": "classification",
+        "task": data_info["task"],
         "num_samples": len(data.data),
         "num_features": len(data.feature_names),
         "depth": depth
     }
 
-    if len(data.data) * len(data.feature_names) < 500000:
-        meanSTree = MeanSimilarityDTClassifier_D7(data_info["categorical"], max_depth=depth)
-    else: meanSTree = MeanSimilarityDTClassifier_D8(data_info["categorical"], max_depth=depth)
-    meanSTree_D9 = MeanSimilarityDTClassifier_D9(data_info["categorical"], max_depth=depth)
+    meanSTree = MeanSimilarityDTClassifier_D8(data_info["categorical"], max_depth=depth)
+    SDTree_D10 = SimilarityDecisionTree_D10( isClassifier = isClassifierTask, categoricalFeatures = data_info["categorical"], max_depth = depth, n_jobs = -1)
     
     #sktree = DecisionTreeClassifier(max_depth=depth)
+    sktree = DecisionTreeRegressor(max_depth=depth)
 
 
-    trees = [meanSTree, meanSTree_D9]
-    names = ["meanSTree", "meanSTree_D9"]
+    trees = [SDTree_D10, sktree]
+    names = ["SDTree_D10", "sktree"]
 
     for tree_i in range(len(trees)):
 
@@ -70,10 +68,10 @@ if __name__ == "__main__":
 
     results = []
 
-    for dataset_i in range(8,10):
-        for depth in range(1,11):
-            print("Starting dataset " + str(dataset_i) + " with depth " + str(10))
-            results.append(pipeline(dataset_i, 10))
+    for dataset_i in range(10,13):
+        for depth in range(5, 11):
+            print("Starting dataset " + str(dataset_i) + " with depth " + str(depth))
+            results.append(pipeline(dataset_i, depth))
     
     utils.export_to_excel(results)
 

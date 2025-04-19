@@ -5,7 +5,9 @@ from joblib import Parallel, delayed
 This class is a decision tree classifier that uses the Gower distance to compute the similarity between samples.
 Treats the mean as threshold.
 
-D7+D8 with jaccard index for binary features  
+D8 with jaccard index for binary features  
+
+Deprecated, since jaccard index does not demostrate better results or efficiency
 '''
 
 class MeanSimilarityDTClassifier_D9:
