@@ -36,8 +36,8 @@ def pipeline(dataset_i, depth=4):
     sktree = DecisionTreeRegressor(max_depth=depth)
 
 
-    trees = [SDTree_D10, sktree]
-    names = ["SDTree_D10", "sktree"]
+    trees = [SDTree_D10]
+    names = ["SDTree_D10"]
 
     for tree_i in range(len(trees)):
 
@@ -47,6 +47,8 @@ def pipeline(dataset_i, depth=4):
         prediction_start_time = time.time()
         y_pred = trees[tree_i].predict(X_test)
         prediction_end_time = time.time()
+
+        print(y_pred)
 
         info["Fit time "+names[tree_i]] = fit_end_time - fit_start_time
         info["Prediction time "+names[tree_i]] = prediction_end_time - prediction_start_time
@@ -68,10 +70,9 @@ if __name__ == "__main__":
 
     results = []
 
-    for dataset_i in range(10,13):
-        for depth in range(5, 11):
-            print("Starting dataset " + str(dataset_i) + " with depth " + str(depth))
-            results.append(pipeline(dataset_i, depth))
+    for dataset_i in range(1,13):
+        print("Starting dataset " + str(dataset_i) + " with depth " + str(10))
+        results.append(pipeline(dataset_i, 10))
     
     utils.export_to_excel(results)
 
