@@ -99,24 +99,23 @@ class SimilarityDecisionTree_D10:
     
     def gower_similarity_to_prototype(self, X, prototype):
 
-        X_num = np.divide(X[:,~self.isCategorical] ,self.numericFeaturesMax,out=np.zeros_like(X[:,~self.isCategorical]), where=self.numericFeaturesMax!=0)
-        P_num = np.divide(prototype[~self.isCategorical] ,self.numericFeaturesMax,out=np.zeros_like(prototype[~self.isCategorical]), where=self.numericFeaturesMax!=0)
+        X_num = X[:,~self.isCategorical]
+        P_num = prototype[~self.isCategorical] 
 
         numericaDifferences = np.abs(X_num - P_num)
         numericaDifferences = np.divide(numericaDifferences, self.numericFeaturesRanges, out=np.zeros_like(numericaDifferences), where=self.numericFeaturesRanges!=0)
-        print(numericaDifferences.shape)
         numericaDifferences = np.sum(numericaDifferences, axis=1)
-        print(numericaDifferences.shape)
+
 
         categoricalDifferences = np.count_nonzero(X[:,self.isCategorical] != prototype[self.isCategorical], axis=1)
 
-        similarities = np.divide((np.add(numericaDifferences, categoricalDifferences)), X.shape[1])
+        similarities = (numericaDifferences + categoricalDifferences) / X.shape[1]
+
+        # X = X.astype(float)
+        # prototype = prototype.astype(float)
+        # sim = gower.gower_matrix(X, prototype.reshape(1,-1), cat_features=self.isCategorical)
         
-        X = X.astype(float)
-        prototype = prototype.astype(float)
-        sim = gower.gower_matrix(X, prototype.reshape(1,-1), cat_features=self.isCategorical)
-        
-        print(np.mean(similarities), " vs ", np.mean(sim))
+        # print(np.mean(similarities), " vs ", np.mean(sim))
 
         return similarities
 
