@@ -1,18 +1,17 @@
 import numpy as np
 from joblib import Parallel, delayed
 
-import gower
 '''
 This class is a decision tree classifier that uses the Gower distance to compute the similarity between samples.
 Treats the mean as threshold.
 
 
-D7 with parallelization.
+D10 optimized
 '''
 
-class SimilarityDecisionTree_D10:
+class SimilarityDecisionTree_D11:
     
-    def __init__(self, isClassifier = True, categoricalFeatures = None, max_depth = 4, n_jobs = -1):
+    def __init__(self, isClassifier = True, categoricalFeatures = None, max_depth = 4, n_jobs = -1, par = 100000):
         self.max_depth = max_depth
         self.categoricalFeatures = categoricalFeatures
         self.isCategorical = None
@@ -20,6 +19,7 @@ class SimilarityDecisionTree_D10:
         self.numericFeaturesRanges = None
         self.n_jobs = n_jobs
         self.isClassifier = isClassifier
+        self.par = par
     
     def fit(self, X, y):
 
@@ -69,7 +69,7 @@ class SimilarityDecisionTree_D10:
             else:
                 return np.mean(y)
         
-        if X.shape[0] * X.shape[1] >= 100000:
+        if X.shape[0] * X.shape[1] >= self.par:
             results = Parallel(n_jobs=self.n_jobs)(
                 delayed(self._build_tree)(X[mask], y[mask], depth + 1)
                 for mask in [leftMask, rightMask]
@@ -94,10 +94,17 @@ class SimilarityDecisionTree_D10:
     
     def gower_similarity_to_prototype(self, X, prototype):
 
-        numericaDifferences = 1 - (np.abs( X[:,~self.isCategorical] - prototype[~self.isCategorical] )/ self.numericFeaturesRanges)
+        numMask = ~self.isCategorical
+        catMask = self.isCategorical
+        numericalRanges = self.numericFeaturesRanges
+
+        numericaDifferences = 1 - (np.abs( X[:,numMask] - prototype[numMask] ) / numericalRanges)
         numericaDifferences = np.sum(numericaDifferences, axis=1)
 
-        categoricalDifferences = np.count_nonzero(X[:,self.isCategorical] != prototype[self.isCategorical], axis=1)
+        #categoricalDifferences = np.count_nonzero(X[:,catMask] != prototype[catMask], axis=1)
+
+        categoricalDifferences = X[:, catMask] != prototype[catMask]
+        categoricalDifferences = np.sum(~categoricalDifferences, axis=1)
 
         similarities = (numericaDifferences + categoricalDifferences) / X.shape[1]
 

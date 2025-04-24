@@ -1,5 +1,6 @@
-from models.MeanSimilarityDTClassifier_D8 import MeanSimilarityDTClassifier_D8
+from models.old.MeanSimilarityDTClassifier_D8 import MeanSimilarityDTClassifier_D8
 from models.SimilarityDecisionTree_D10 import SimilarityDecisionTree_D10
+from models.SimilarityDecisionTree_D11 import SimilarityDecisionTree_D11
 
 
 from sklearn.tree import DecisionTreeClassifier
@@ -13,7 +14,7 @@ from sklearn.metrics import accuracy_score, mean_squared_error, mean_absolute_er
 
 import utils
 
-def pipeline(dataset_i, depth=4):
+def pipeline(dataset_i, depth=4, par=100000):
 
     data_info = load_data(dataset_i)
     data = data_info["data"]
@@ -31,24 +32,23 @@ def pipeline(dataset_i, depth=4):
 
     meanSTree = MeanSimilarityDTClassifier_D8(data_info["categorical"], max_depth=depth)
     SDTree_D10 = SimilarityDecisionTree_D10( isClassifier = isClassifierTask, categoricalFeatures = data_info["categorical"], max_depth = depth, n_jobs = -1)
+    SDTree_D11 = SimilarityDecisionTree_D11( isClassifier = isClassifierTask, categoricalFeatures = data_info["categorical"], max_depth = depth, n_jobs = -1)
     
     #sktree = DecisionTreeClassifier(max_depth=depth)
     sktree = DecisionTreeRegressor(max_depth=depth)
 
 
-    trees = [SDTree_D10]
-    names = ["SDTree_D10"]
+    trees = [ SDTree_D11]
+    names = ["SDTree_D11"]
 
     for tree_i in range(len(trees)):
 
         fit_start_time = time.time()
-        trees[tree_i].fit(X_train, y_train)
+        trees[tree_i].fit(X_train, y_train, par)
         fit_end_time = time.time()
         prediction_start_time = time.time()
         y_pred = trees[tree_i].predict(X_test)
         prediction_end_time = time.time()
-
-        print(y_pred)
 
         info["Fit time "+names[tree_i]] = fit_end_time - fit_start_time
         info["Prediction time "+names[tree_i]] = prediction_end_time - prediction_start_time
@@ -71,8 +71,9 @@ if __name__ == "__main__":
     results = []
 
     for dataset_i in range(1,13):
-        print("Starting dataset " + str(dataset_i) + " with depth " + str(10))
-        results.append(pipeline(dataset_i, 10))
+        for par in range(50000, 550000, 50000):
+            print("Starting dataset " + str(dataset_i) + " with depth " + str(10))
+            results.append(pipeline(dataset_i, 10, par))
     
     utils.export_to_excel(results)
 
