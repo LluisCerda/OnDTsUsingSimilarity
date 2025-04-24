@@ -32,19 +32,19 @@ def pipeline(dataset_i, depth=4, par=100000):
 
     meanSTree = MeanSimilarityDTClassifier_D8(data_info["categorical"], max_depth=depth)
     SDTree_D10 = SimilarityDecisionTree_D10( isClassifier = isClassifierTask, categoricalFeatures = data_info["categorical"], max_depth = depth, n_jobs = -1)
-    SDTree_D11 = SimilarityDecisionTree_D11( isClassifier = isClassifierTask, categoricalFeatures = data_info["categorical"], max_depth = depth, n_jobs = -1)
+    SDTree_D11 = SimilarityDecisionTree_D11( isClassifier = isClassifierTask, categoricalFeatures = data_info["categorical"], max_depth = depth, n_jobs = -1, par=par)
     
     #sktree = DecisionTreeClassifier(max_depth=depth)
     sktree = DecisionTreeRegressor(max_depth=depth)
 
 
-    trees = [ SDTree_D11]
-    names = ["SDTree_D11"]
+    trees = [SDTree_D10, SDTree_D11]
+    names = ["DSTree_D10", "SDTree_D11"]
 
     for tree_i in range(len(trees)):
 
         fit_start_time = time.time()
-        trees[tree_i].fit(X_train, y_train, par)
+        trees[tree_i].fit(X_train, y_train)
         fit_end_time = time.time()
         prediction_start_time = time.time()
         y_pred = trees[tree_i].predict(X_test)
@@ -70,9 +70,10 @@ if __name__ == "__main__":
 
     results = []
 
-    for dataset_i in range(1,13):
-        for par in range(50000, 550000, 50000):
-            print("Starting dataset " + str(dataset_i) + " with depth " + str(10))
+
+    for par in range(500000, 500001):
+        for dataset_i in range(1,8):
+            print("Starting dataset " + str(dataset_i) + " with par " + str(par))
             results.append(pipeline(dataset_i, 10, par))
     
     utils.export_to_excel(results)

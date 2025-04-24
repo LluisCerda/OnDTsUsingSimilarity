@@ -1,7 +1,6 @@
 import numpy as np
 from joblib import Parallel, delayed
 
-import gower
 '''
 This class is a decision tree classifier that uses the Gower distance to compute the similarity between samples.
 Treats the mean as threshold.

@@ -1,6 +1,8 @@
 import numpy as np
 from joblib import Parallel, delayed
 
+from myGower import gower_similarity_to_prototype_numba
+
 '''
 This class is a decision tree classifier that uses the Gower distance to compute the similarity between samples.
 Treats the mean as threshold.
@@ -11,7 +13,7 @@ D10 optimized
 
 class SimilarityDecisionTree_D11:
     
-    def __init__(self, isClassifier = True, categoricalFeatures = None, max_depth = 4, n_jobs = -1, par = 100000):
+    def __init__(self, isClassifier = True, categoricalFeatures = None, max_depth = 4, n_jobs = -1, par = 500000):
         self.max_depth = max_depth
         self.categoricalFeatures = categoricalFeatures
         self.isCategorical = None
@@ -23,24 +25,9 @@ class SimilarityDecisionTree_D11:
     
     def fit(self, X, y):
 
-        self.isCategorical = np.zeros(X.shape[1], dtype=bool)
-        if self.categoricalFeatures is not None:
-            self.isCategorical[self.categoricalFeatures] = True 
+        self.compute_categorical_mask(X.shape[1])
 
-        self.numericFeaturesRanges = np.zeros(X.shape[1])
-        self.numericFeaturesMax = np.zeros(X.shape[1])
-        for i in range(X.shape[1]):
-            if not self.isCategorical[i]:
-
-                col = X[:, i]
-                max_f = np.nanmax(col)
-                min_f = np.nanmin(col)
-
-                self.numericFeaturesMax[i] = max_f if max_f > min_f else 1
-                self.numericFeaturesRanges[i] = np.abs(max_f - min_f) if max_f > min_f else 1
-        
-        self.numericFeaturesRanges = self.numericFeaturesRanges[~self.isCategorical]
-        self.numericFeaturesMax = self.numericFeaturesMax[~self.isCategorical]
+        self.compute_numeric_ranges(X)
 
         self.tree = self._build_tree(X, y, depth=0)
     
@@ -56,7 +43,7 @@ class SimilarityDecisionTree_D11:
         prototype_idx = np.random.randint(0, X.shape[0])
         prototype = X[prototype_idx]
 
-        similaritiesToPrototype = self.gower_similarity_to_prototype(X, prototype) 
+        similaritiesToPrototype = gower_similarity_to_prototype_numba(X, prototype, self.isCategorical, self.numericFeaturesRanges) 
 
         threshold = np.median(similaritiesToPrototype) 
         
@@ -92,30 +79,12 @@ class SimilarityDecisionTree_D11:
 
         return y_pred
     
-    def gower_similarity_to_prototype(self, X, prototype):
-
-        numMask = ~self.isCategorical
-        catMask = self.isCategorical
-        numericalRanges = self.numericFeaturesRanges
-
-        numericaDifferences = 1 - (np.abs( X[:,numMask] - prototype[numMask] ) / numericalRanges)
-        numericaDifferences = np.sum(numericaDifferences, axis=1)
-
-        #categoricalDifferences = np.count_nonzero(X[:,catMask] != prototype[catMask], axis=1)
-
-        categoricalDifferences = X[:, catMask] != prototype[catMask]
-        categoricalDifferences = np.sum(~categoricalDifferences, axis=1)
-
-        similarities = (numericaDifferences + categoricalDifferences) / X.shape[1]
-
-        return similarities
-
     def _traverse_tree(self, X, node, indices):
         
         if not isinstance(node, dict):
             return {node: indices} 
 
-        similaritiesToPrototype = self.gower_similarity_to_prototype(X, node["prototype"])
+        similaritiesToPrototype = gower_similarity_to_prototype_numba(X, node["prototype"], self.isCategorical, self.numericFeaturesRanges)
         
         leftMask = similaritiesToPrototype <= node["threshold"]
         rightMask = ~leftMask
@@ -131,5 +100,40 @@ class SimilarityDecisionTree_D11:
             leftResult[key] = np.concatenate((leftResult[key], rightResult[key])) if key in leftResult else rightResult[key]
 
         return leftResult 
+    
+    def gower_similarity_to_prototype(self, X, prototype):
+
+        numMask = ~self.isCategorical
+        catMask = self.isCategorical
+        numericalRanges = self.numericFeaturesRanges
+
+        numericaDifferences = 1 - (np.abs( X[:,numMask] - prototype[numMask] ) / numericalRanges)
+        numericaDifferences = np.sum(numericaDifferences, axis=1)
+
+        categoricalDifferences = X[:, catMask] != prototype[catMask]
+        categoricalDifferences = np.sum(~categoricalDifferences, axis=1)
+
+        similarities = (numericaDifferences + categoricalDifferences) / X.shape[1]
+
+        return similarities
+
+    def compute_numeric_ranges(self, X):
+
+        self.numericFeaturesRanges = np.zeros(X.shape[1])
+        for i in range(X.shape[1]):
+            if not self.isCategorical[i]:
+
+                col = X[:, i]
+                max = np.nanmax(col)
+                min = np.nanmin(col)
+
+                self.numericFeaturesRanges[i] = np.abs(max - min) if max > min else 1
+        
+        self.numericFeaturesRanges = self.numericFeaturesRanges[~self.isCategorical]
+
+    def compute_categorical_mask(self, n):
+        self.isCategorical = np.zeros(n, dtype=bool)
+        if self.categoricalFeatures is not None:
+            self.isCategorical[self.categoricalFeatures] = True 
 
 
