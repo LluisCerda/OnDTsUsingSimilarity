@@ -26,7 +26,6 @@ class SimilarityDecisionTree_D11:
     def fit(self, X, y):
 
         self.compute_categorical_mask(X.shape[1])
-
         self.compute_numeric_ranges(X)
 
         self.tree = self._build_tree(X, y, depth=0)

@@ -1,6 +1,6 @@
 from models.old.MeanSimilarityDTClassifier_D8 import MeanSimilarityDTClassifier_D8
 from models.SimilarityDecisionTree_D10 import SimilarityDecisionTree_D10
-from models.SimilarityDecisionTree_D11 import SimilarityDecisionTree_D11
+from models.SimilarityDecisionTree_D12 import SimilarityDecisionTree_D12
 
 
 from sklearn.tree import DecisionTreeClassifier
@@ -32,14 +32,14 @@ def pipeline(dataset_i, depth=4, par=100000):
 
     meanSTree = MeanSimilarityDTClassifier_D8(data_info["categorical"], max_depth=depth)
     SDTree_D10 = SimilarityDecisionTree_D10( isClassifier = isClassifierTask, categoricalFeatures = data_info["categorical"], max_depth = depth, n_jobs = -1)
-    SDTree_D11 = SimilarityDecisionTree_D11( isClassifier = isClassifierTask, categoricalFeatures = data_info["categorical"], max_depth = depth, n_jobs = -1, par=par)
+    SDTree_D12 = SimilarityDecisionTree_D12( isClassifier = isClassifierTask, categoricalFeatures = data_info["categorical"], max_depth = depth, n_jobs = -1, par=par)
     
     #sktree = DecisionTreeClassifier(max_depth=depth)
     sktree = DecisionTreeRegressor(max_depth=depth)
 
 
-    trees = [SDTree_D10, SDTree_D11]
-    names = ["DSTree_D10", "SDTree_D11"]
+    trees = [SDTree_D10, SDTree_D12]
+    names = ["DSTree_D10", "SDTree_D12"]
 
     for tree_i in range(len(trees)):
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
 
     for par in range(500000, 500001):
-        for dataset_i in range(1,8):
+        for dataset_i in range(1,12):
             print("Starting dataset " + str(dataset_i) + " with par " + str(par))
             results.append(pipeline(dataset_i, 10, par))
     

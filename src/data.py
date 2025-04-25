@@ -15,7 +15,7 @@ def data_preprocessing(data, categoricalFeatures):
             mask = pd.isna(data.data[:, i]) 
             data.data[:, i][mask] = "NaN"
             data.data[:, i]  = np.unique(data.data[:, i], return_inverse=True)[1]
-            data.data[:, i] = data.data[:, i].astype(int)
+            data.data[:, i] = data.data[:, i].astype(np.float64)
         else:
             col = data.data[:, i].astype(float)
     
@@ -26,6 +26,10 @@ def data_preprocessing(data, categoricalFeatures):
 
             data.data[:, i] = data.data[:, i].astype(float)
     
+    for i in range(len(data.data[0])):
+             print(data.data[:, i].dtype)
+             print(data.data[:, i])
+
     return data
 
 def load_data(num):
