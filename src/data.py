@@ -12,23 +12,18 @@ def data_preprocessing(data, categoricalFeatures):
 
     for i in range(len(data.data[0])):
         if categoricalFeatures is not None and i in categoricalFeatures:
-            mask = pd.isna(data.data[:, i]) 
-            data.data[:, i][mask] = "NaN"
-            data.data[:, i]  = np.unique(data.data[:, i], return_inverse=True)[1]
-            data.data[:, i] = data.data[:, i].astype(np.float64)
-        else:
-            col = data.data[:, i].astype(float)
-    
-            mean_value = np.nanmean(col)  
             
-            col[np.isnan(col)] = mean_value  
-            data.data[:, i] = col
+            mask = pd.isna(data.data[:, i])
+            data.data[:, i][mask] = "NaN"
+            data.data[:, i], _ = pd.factorize(data.data[:, i], sort=True)
 
-            data.data[:, i] = data.data[:, i].astype(float)
-    
-    for i in range(len(data.data[0])):
-             print(data.data[:, i].dtype)
-             print(data.data[:, i])
+        else:
+            
+            col = data.data[:, i].astype(float)
+            mean_value = np.nanmean(col)  
+            data.data[:, i][np.isnan(col)] = mean_value  
+
+    data.data = data.data.astype(np.float64)  
 
     return data
 
@@ -63,6 +58,7 @@ def load_data(num):
         #58000 rows, 9 columns
         data = fetch_openml(name="shuttle", as_frame=False, version=1, parser="auto")
         data.target = data.target.astype(int)
+        data.data = data.data.astype(np.float64)  
         return {"data": data, "categorical": categoricalFeatures, "name": "Shuttle", "filename": "shuttle.html", "task": "classification"}
     
 

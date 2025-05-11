@@ -90,17 +90,6 @@ class SimilarityDecisionTree_D10:
             y_pred[indices] = label 
 
         return y_pred
-    
-    def gower_similarity_to_prototype(self, X, prototype):
-
-        numericaDifferences = 1 - (np.abs( X[:,~self.isCategorical] - prototype[~self.isCategorical] )/ self.numericFeaturesRanges)
-        numericaDifferences = np.sum(numericaDifferences, axis=1)
-
-        categoricalDifferences = np.count_nonzero(X[:,self.isCategorical] != prototype[self.isCategorical], axis=1)
-
-        similarities = (numericaDifferences + categoricalDifferences) / X.shape[1]
-
-        return similarities
 
     def _traverse_tree(self, X, node, indices):
         
@@ -123,5 +112,22 @@ class SimilarityDecisionTree_D10:
             leftResult[key] = np.concatenate((leftResult[key], rightResult[key])) if key in leftResult else rightResult[key]
 
         return leftResult 
+    
+    def gower_similarity_to_prototype(self, X, prototype):
+
+        numMask = ~self.isCategorical
+        catMask = self.isCategorical
+        
+        numericaDifferences = 1 - (np.abs( X[:,numMask] - prototype[numMask] )/ self.numericFeaturesRanges)
+        numericaDifferences = np.sum(numericaDifferences, axis=1)
+
+        # categoricalDifferences = np.count_nonzero(X[:,self.isCategorical] != prototype[self.isCategorical], axis=1)
+
+        categoricalDifferences = X[:, catMask] != prototype[catMask]
+        categoricalDifferences = np.sum(~categoricalDifferences, axis=1)
+
+        similarities = (numericaDifferences + categoricalDifferences) / X.shape[1]
+
+        return similarities
 
 

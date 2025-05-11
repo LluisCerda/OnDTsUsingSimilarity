@@ -55,17 +55,35 @@ def export_to_excel(data, filename="output/results.xlsx"):
 
     print(f"Results exported to {filename}")
 
-def tree_depth_and_nodes(tree):
+def tree_depth_and_nodes_2(tree):
     if not isinstance(tree, dict): 
         return 1, 1 
 
-    left_depth, left_nodes = tree_depth_and_nodes(tree["left"])
-    right_depth, right_nodes = tree_depth_and_nodes(tree["right"])
+    left_depth, left_nodes = tree_depth_and_nodes_2(tree["left"])
+    right_depth, right_nodes = tree_depth_and_nodes_2(tree["right"])
 
     total_depth = 1 + max(left_depth, right_depth) 
     total_nodes = 1 + left_nodes + right_nodes  
 
     return total_depth, total_nodes
+
+def tree_depth_and_nodes_N(tree):
+    if not isinstance(tree, dict) or "children" not in tree or not tree["children"]:
+        return 1, 1  
+
+    max_child_depth = 0
+    total_child_nodes = 0
+
+    for child in tree["children"]:
+        child_depth, child_nodes = tree_depth_and_nodes_N(child)
+        max_child_depth = max(max_child_depth, child_depth)
+        total_child_nodes += child_nodes
+
+    total_depth = 1 + max_child_depth
+    total_nodes = 1 + total_child_nodes 
+
+    return total_depth, total_nodes
+
 
 def get_categorical_indices(isCategorical):
     return [i for i, is_cat in enumerate(isCategorical) if is_cat]
