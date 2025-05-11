@@ -185,19 +185,19 @@ class SimilarityDecisionTree_D16:
             weighted_categorical_sim = np.sum(categorical_matches_per_feature.astype(float) * self.weights[self.isCategorical], axis=1)
             total_similarity_accumulator += weighted_categorical_sim
 
-            intersection = np.logical_and(X_normalized_subset[:, self.isCategorical], prototype_vector_normalized[self.isCategorical])
-            union = np.logical_or(X_normalized_subset[:, self.isCategorical], prototype_vector_normalized[self.isCategorical])
+            # intersection = np.logical_and(X_normalized_subset[:, self.isCategorical], prototype_vector_normalized[self.isCategorical])
+            # union = np.logical_or(X_normalized_subset[:, self.isCategorical], prototype_vector_normalized[self.isCategorical])
             
-            intersection_count = np.sum(intersection, axis=1)
-            union_count = np.sum(union, axis=1)
+            # intersection_count = np.sum(intersection, axis=1)
+            # union_count = np.sum(union, axis=1)
 
-            union_count_safe = np.where(union_count == 0, 1, union_count)
+            # union_count_safe = np.where(union_count == 0, 1, union_count)
 
-            binaryDifferences = (union_count - intersection_count) / union_count_safe
+            # binaryDifferences = (union_count - intersection_count) / union_count_safe
 
-            binaryDifferences = binaryDifferences * np.sum(self.weights[self.isCategorical])
+            # binaryDifferences = binaryDifferences * np.sum(self.weights[self.isCategorical])
 
-            total_similarity_accumulator -= binaryDifferences
+            # total_similarity_accumulator -= binaryDifferences
         
         return total_similarity_accumulator
     
