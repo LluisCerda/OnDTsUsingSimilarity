@@ -36,7 +36,8 @@ class MeanSimilarityDTClassifier_D9:
     def _build_tree(self, X, y, depth):
         
         if depth >= self.max_depth or len(np.unique(y)) == 1:
-            return np.bincount(y).argmax()
+            unique_classes, counts = np.unique(y, return_counts=True)
+            return unique_classes[np.argmax(counts)]
         
         prototype_idx = np.random.randint(0, X.shape[0])
         prototype = X[prototype_idx]
@@ -49,7 +50,8 @@ class MeanSimilarityDTClassifier_D9:
         rightMask = ~leftMask
         
         if np.sum(leftMask) == 0 or np.sum(rightMask) == 0:
-            return np.bincount(y).argmax()
+            unique_classes, counts = np.unique(y, return_counts=True)
+            return unique_classes[np.argmax(counts)]
         
         if X.shape[0] * X.shape[1] >= 100000:
             results = Parallel(n_jobs=self.n_jobs)(

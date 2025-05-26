@@ -52,8 +52,8 @@ from sklearn.metrics import accuracy_score, mean_squared_error
 X = np.array([
     [10, 0, 100, 0],
     [12, 1, 110, 1],
-    [np.nan, 0, 105, 0], # Sample with NaN in numerical
-    [15, 2, 120, np.nan], # Sample with NaN in categorical
+    [np.nan, 0, 105, 0],
+    [15, 2, 120, np.nan], 
     [11, 1, 90, 1],
     [13, 0, 115, 0],
     [16, 2, 125, 1],
@@ -175,4 +175,4 @@ print("Mean Squared Error:", mean_squared_error(y_test_reg, predictions_reg))
 
 ## License
 
-Specify your license here (e.g., MIT License, Apache 2.0, etc.). If unsure, MIT is a common permissive license.
+MIT License.

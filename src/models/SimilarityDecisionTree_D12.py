@@ -6,7 +6,7 @@ from myGowerV2 import gower_similarity_to_prototype_numba
 
 '''
 
-D11 optimized: Uses indices to avoid data copying during recursion.
+D11 optimized: Uses indices to avoid data copying during recursion. And myGowerV2
 
 '''
 

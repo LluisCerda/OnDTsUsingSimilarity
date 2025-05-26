@@ -1,7 +1,12 @@
+from models.old.MeanSimilarityDTClassifier_D9 import MeanSimilarityDTClassifier_D9
+from models.old.SimilarityDecisionTree_D10 import SimilarityDecisionTree_D10
+from models.old.SimilarityDecisionTree_D11 import SimilarityDecisionTree_D11
+from models.SimilarityDecisionTree_D12 import SimilarityDecisionTree_D12
+from models.SimilarityDecisionTree_D14 import SimilarityDecisionTree_D14
 from models.SimilarityDecisionTree_D13 import SimilarityDecisionTree_D13
 from models.SimilarityDecisionTree_D15 import SimilarityDecisionTree_D15
 from models.SimilarityDecisionTree_D16 import SimilarityDecisionTree_D16
-
+from models.SimilarityDecisionTree_D17 import SimilarityDecisionTree_D17
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -26,13 +31,27 @@ def pipeline(dataset_i, depth=7, par=500000, min_samples=1, splits=2):
 
     X_train, X_test, y_train, y_test = train_test_split(data.data, data.target, test_size=0.2, random_state=42)    
 
+    SDTree_D9 = MeanSimilarityDTClassifier_D9(categoricalFeatures = data_info["categorical"], max_depth = depth, n_jobs = -1)
+    SDTree_D10 = SimilarityDecisionTree_D10( isClassifier = isClassifierTask, categoricalFeatures = data_info["categorical"], max_depth = depth, n_jobs = -1)
+    SDTree_D11 = SimilarityDecisionTree_D11( isClassifier = isClassifierTask, categoricalFeatures = data_info["categorical"], max_depth = depth, n_jobs = -1, par=par)
+    SDTree_D12 = SimilarityDecisionTree_D12( isClassifier = isClassifierTask, categoricalFeatures = data_info["categorical"], max_depth = depth, n_jobs = -1, par=par, min_samples_leaf=min_samples)
+    SDTree_D13 = SimilarityDecisionTree_D13( isClassifier = isClassifierTask, categoricalFeatures = data_info["categorical"], maxDepth = depth, nJobs = -1, parallelizationThreshold=par, minSamplesLeaf=min_samples)
+    SDTree_D14 = SimilarityDecisionTree_D14( isClassifier = isClassifierTask, categoricalFeatures = data_info["categorical"], max_depth = depth, n_jobs = -1, par=par, min_samples_leaf=min_samples)
     SDTree_D15 = SimilarityDecisionTree_D15( isClassifier = isClassifierTask, categoricalFeatures = data_info["categorical"], maxDepth = depth, nJobs = -1, parallelizationThreshold=par, minSamplesLeaf=min_samples)
     SDTree_D16 = SimilarityDecisionTree_D16( isClassifier = isClassifierTask, categoricalFeatures = data_info["categorical"], maxDepth = depth, parallelizationThreshold=par, minSamplesLeaf=min_samples, nChildren=splits)
     #sktree = DecisionTreeClassifier(max_depth=depth)
     #sktree = DecisionTreeRegressor(max_depth=depth)
 
 
-    trees = [SDTree_D16, ]
+    trees = [
+        SDTree_D16 ]
+        # SDTree_D15]
+        # SDTree_D14]
+        # SDTree_D13]
+        # SDTree_D12]
+        # SDTree_D11]
+        #SDTree_D10]
+        # SDTree_D9]
     names = ["SDTree_D16"]
 
     info = {
@@ -66,7 +85,7 @@ if __name__ == "__main__":
 
     results = []
 
-    for depth in [6,8,10,12,14, 16]:
+    for depth in [6,8,10,12,14 ,16]:
         for dataset_i in range(1, 13):
             print("Starting dataset " + str(dataset_i) + " with depth " + str(depth))
             results.append(pipeline(dataset_i, depth=depth, splits=2))
@@ -93,7 +112,7 @@ if __name__ == "__main__":
     best_results_list = list(best_results.values())
 
 
-    utils.export_to_excel(results, filename="output/results.xlsx")
+    # utils.export_to_excel(results, filename="output/results.xlsx")
     utils.export_to_excel(best_results_list, filename="output/best_results.xlsx")
 
         

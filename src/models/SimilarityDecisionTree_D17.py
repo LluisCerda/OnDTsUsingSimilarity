@@ -10,7 +10,7 @@ D15: Original version extended to support n-ary splits using linspace for simila
 Further refined for clarity, robustness, and to ensure input data is not modified.
 '''
 
-class SimilarityDecisionTree_D16:
+class SimilarityDecisionTree_D17:
     
     def __init__(self, isClassifier=True, categoricalFeatures=None, maxDepth=7, 
                  parallelizationThreshold=500000, minSamplesLeaf=1, 
@@ -42,10 +42,6 @@ class SimilarityDecisionTree_D16:
 
         self.numericFeaturesRanges = None
         self.minNumericFeatures = None
-        
-
-
-
 
     def fit(self, X, y):
 
@@ -215,7 +211,6 @@ class SimilarityDecisionTree_D16:
 
             sim = 1.0 - np.abs(X_num - proto_num)  
 
-            # Missing value mask 
             mask_X_nan = np.isnan(X_num)
             mask_proto_nan = np.isnan(proto_num)
             mask_proto_nan_broadcasted = np.broadcast_to(mask_proto_nan, X_num.shape)
@@ -223,20 +218,18 @@ class SimilarityDecisionTree_D16:
 
             sim[invalid_X_mask] = 0.0
 
-            # Masked weights: 0 where data is missing
             valid_weights = np.broadcast_to(weights_num, X_num.shape).copy()
             valid_weights[invalid_X_mask] = 0.0
 
             total_similarity_accumulator += np.sum(sim * valid_weights, axis=1)
 
-        # --- Categorical Features ---
         if np.any(self.isCategorical):
 
             X_cat = X_normalized_subset[:, self.isCategorical]
             proto_cat = prototype_vector_normalized[self.isCategorical]
             weights_cat = self.weights[self.isCategorical]
 
-            mask_X_nan = (X_cat == None) | (X_cat != X_cat)  # catches both None and np.nan
+            mask_X_nan = (X_cat == None) | (X_cat != X_cat)  
             mask_proto_nan = (proto_cat == None) | (proto_cat != proto_cat)
             mask_proto_nan_broadcasted = np.broadcast_to(mask_proto_nan, X_cat.shape)
             invalid_mask = mask_X_nan | mask_proto_nan_broadcasted
