@@ -43,6 +43,7 @@ def visualize_tree_pyvis(tree, output_file="tree.html", feature_names=None, clas
 def visualize_dataframe(data):
     df = pd.DataFrame(data.data, columns=data.feature_names)
     df['target'] = data.target
+    # print(df.iloc[:, 5:15])
     print(df)
 
 def export_to_excel(data, filename="output/results.xlsx"):

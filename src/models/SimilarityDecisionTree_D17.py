@@ -1,5 +1,6 @@
 import numpy as np
 from joblib import Parallel, delayed
+from pandas import isna
 
 '''
 This class is a decision tree classifier/regressor that uses the Gower distance 
@@ -118,7 +119,7 @@ class SimilarityDecisionTree_D17:
         if self.tree is None:
             raise RuntimeError("Tree has not been fitted. Call fit() before predict().")
 
-        X_processed = X.astype(np.float64, copy=True)
+        X_processed = np.array(X)
         
         if self.IS_CLASSIFIER and self.Y_train is not None:
              y_pred = np.empty(X_processed.shape[0], dtype=self.Y_train.dtype)
@@ -201,18 +202,17 @@ class SimilarityDecisionTree_D17:
         
         n_samples = X_normalized_subset.shape[0]
         total_similarity_accumulator = np.zeros(n_samples, dtype=np.float64)
-        total_valid_weight = np.zeros(n_samples, dtype=np.float64)
 
         if np.any(self.isNumeric):
             
-            X_num = X_normalized_subset[:, self.isNumeric]
-            proto_num = prototype_vector_normalized[self.isNumeric]
+            X_num = X_normalized_subset[:, self.isNumeric].astype(np.float64)
+            proto_num = prototype_vector_normalized[self.isNumeric].astype(np.float64)
             weights_num = self.weights[self.isNumeric]
 
             sim = 1.0 - np.abs(X_num - proto_num)  
 
-            mask_X_nan = np.isnan(X_num)
-            mask_proto_nan = np.isnan(proto_num)
+            mask_X_nan = isna(X_num)
+            mask_proto_nan = isna(proto_num)
             mask_proto_nan_broadcasted = np.broadcast_to(mask_proto_nan, X_num.shape)
             invalid_X_mask = mask_X_nan | mask_proto_nan_broadcasted
 
@@ -243,7 +243,6 @@ class SimilarityDecisionTree_D17:
             total_similarity_accumulator += np.sum(matches * valid_weights, axis=1)
 
         return total_similarity_accumulator
-
 
     def compute_categorical_mask(self, n_features):
         self.isCategorical = np.zeros(n_features, dtype=bool)
@@ -330,3 +329,19 @@ class SimilarityDecisionTree_D17:
             self.weights = np.ones(self.X_train_normalized.shape[1]) / self.X_train_normalized.shape[1]
         elif len(self.weights) != self.X_train_normalized.shape[1]:
             raise ValueError(f"Length of weights ({len(self.weights)}) must match number of features ({self.X_train_normalized.shape[1]}).")
+
+    def data_encoding(self, X, y= None):
+
+        if y is not None:
+            _, y = np.unique(y, return_inverse=True)
+            y = y.astype(np.float64)
+
+        for i in range(len(X[0])):
+            if self.isCategorical[i]:
+                mask = isna(X[:, i])
+                
+                _, X[:, i] = np.unique(X[:, i], return_inverse=True)
+
+        X = X.astype(np.float64)
+ 
+        return X, y

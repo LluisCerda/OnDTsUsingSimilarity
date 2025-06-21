@@ -1,33 +1,7 @@
 from sklearn.datasets import load_wine, load_iris, fetch_california_housing, fetch_openml, load_diabetes, load_breast_cancer, load_digits
-
+import utils as utils
 import numpy as np
-import pandas as pd
-import utils
-
-
-def data_preprocessing(data, categoricalFeatures):
-
-    _, y_encoded = np.unique(data.target, return_inverse=True)
-    data.target = y_encoded
-
-    for i in range(len(data.data[0])):
-        if categoricalFeatures is not None and i in categoricalFeatures:
-            
-            mask = pd.isna(data.data[:, i])
-            data.data[:, i][mask] = "NaN"
-            data.data[:, i], _ = pd.factorize(data.data[:, i], sort=True)
-
-        else:
-            col = data.data[:, i].astype(float)
-            mean_value = np.nanmean(col)  
-            data.data[:, i][np.isnan(col)] = mean_value  
-
-    data.data = data.data.astype(np.float64)  
-    data.target = data.target.astype(np.int64)
-
-    utils.visualize_dataframe(data)
-
-    return data
+from sklearn.utils import Bunch
 
 def load_data(num):
 
@@ -53,7 +27,6 @@ def load_data(num):
     if num == 6: 
         #13910 rows, 129 columns
         data = fetch_openml(name="gas-drift", as_frame=False, version=1, parser="auto")
-        data.target = data.target.astype(int)
         return {"data": data, "categorical": categoricalFeatures, "name": "Gas Drift", "filename": "gas_drift.html", "task": "classification"}
 
     if num == 7: 
@@ -67,23 +40,13 @@ def load_data(num):
     #CLASSIFICATION NUMERICAL AND CATEGORICAL
     if num == 8: #Has missing values
         categoricalFeatures = [1, 3, 5, 6, 7, 8, 9, 13]
-        data = data_preprocessing(fetch_openml("adult", version=2, as_frame=False, parser="auto"), categoricalFeatures)
-        # all_indices = np.arange(data.data.shape[1])
-        # numerical_indices = np.setdiff1d(all_indices, categoricalFeatures)
-
-        # # Filter data.data to keep only numerical columns
-        # data.data = data.data[:, numerical_indices]
+        data = fetch_openml("adult", version=2, as_frame=False, parser="auto")
         return {"data": data, "categorical": categoricalFeatures, "name": "Adult", "filename": "adult.html", "task": "classification"}
     
     if num == 9: 
 
         categoricalFeatures = [1,2,3,4,5,6,7,8,9,10,11,12,18]
-        data = data_preprocessing( fetch_openml(data_id=269, as_frame=False, parser="auto"), categoricalFeatures)
-        # all_indices = np.arange(data.data.shape[1])
-        # numerical_indices = np.setdiff1d(all_indices, categoricalFeatures)
-
-        # # Filter data.data to keep only numerical columns
-        # data.data = data.data[:, numerical_indices]
+        data = fetch_openml(data_id=269, as_frame=False, parser="auto")
         return {"data": data, "categorical": categoricalFeatures, "name": "Hepatitis", "filename": "hepatitis.html", "task": "classification"}
     
     if num == 10:
@@ -91,20 +54,14 @@ def load_data(num):
         # 7 numeric, 14 categorical
         categoricalFeatures = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         data = fetch_openml(name="default-of-credit-card-clients", as_frame=False, parser="auto")
-        all_indices = np.arange(data.data.shape[1])
-        numerical_indices = np.setdiff1d(all_indices, categoricalFeatures)
-
-        data.data = data.data[:, numerical_indices]
+        utils.visualize_dataframe(data)
         return {"data": data, "categorical": categoricalFeatures, "name": "credit-card", "filename": "credit_card.html", "task": "classification"}
 
     if num == 11:
         #270 rows, 14 columns
         categoricalFeatures = [1, 2, 3, 4, 6, 7, 8, 10, 15]
-        data = data_preprocessing(fetch_openml(data_id=1461, as_frame=False, parser="auto"), categoricalFeatures)
-        # all_indices = np.arange(data.data.shape[1])
-        # numerical_indices = np.setdiff1d(all_indices, categoricalFeatures)
-
-        # data.data = data.data[:, numerical_indices]
+        data = fetch_openml(data_id=1461, as_frame=False, parser="auto")
+        utils.visualize_dataframe(data)
         return {"data": data, "categorical": categoricalFeatures, "name": "bank-marketing", "filename": "bank_marketing.html", "task": "classification"}
 
     #REGRESSION
@@ -119,11 +76,7 @@ def load_data(num):
         #506 rows, 14 columns
         #Real from 0 to 228
         categoricalFeatures = [3, 8]
-        data = data_preprocessing(fetch_openml(name="boston", as_frame=False, version=1), categoricalFeatures)
-        # all_indices = np.arange(data.data.shape[1])
-        # numerical_indices = np.setdiff1d(all_indices, categoricalFeatures)
-
-        # data.data = data.data[:, numerical_indices]
+        data = fetch_openml(name="boston", as_frame=False, version=1, parser="auto")
         return {"data": data, "categorical": categoricalFeatures, "name": "Boston Housing", "filename": "boston_housing.html", "task": "regression"}
 
     if num == 14: 
@@ -139,11 +92,7 @@ def load_data(num):
         # Real from 0 to 1
         # categorical 5, numeric 7
         categoricalFeatures = [0, 1, 4, 6, 7]
-        data = data_preprocessing(fetch_openml(name="Bike_sharing_Demand", as_frame=False, parser="auto", version=2), categoricalFeatures)  
-        # all_indices = np.arange(data.data.shape[1])
-        # numerical_indices = np.setdiff1d(all_indices, categoricalFeatures)
-
-        # data.data = data.data[:, numerical_indices]
+        data = fetch_openml(name="Bike_sharing_Demand", as_frame=False, parser="auto", version=2)
         return {"data": data, "categorical": categoricalFeatures, "name": "Bike Sharing Demand", "filename": "bike_sharing_demand.html", "task": "regression"}
     
     if num == 16:
@@ -153,4 +102,3 @@ def load_data(num):
         categoricalFeatures = None
         data = fetch_openml(name="Concrete_Compressive_Strength", as_frame=False, parser="auto", version=7)
         return {"data": data, "categorical": categoricalFeatures, "name": "Concrete Compressive Strength", "filename": "concrete_compressive_strength.html", "task": "regression"}
-
