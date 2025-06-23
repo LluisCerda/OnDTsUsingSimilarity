@@ -6,7 +6,7 @@ from models.SimilarityDecisionTree_D14 import SimilarityDecisionTree_D14
 from models.SimilarityDecisionTree_D13 import SimilarityDecisionTree_D13
 from models.SimilarityDecisionTree_D15 import SimilarityDecisionTree_D15
 from models.SimilarityDecisionTree_D16 import SimilarityDecisionTree_D16
-from models.SimilarityDecisionTree_D17 import SimilarityDecisionTree_D17
+from models.SimilarityDecisionTree import SimilarityDecisionTree_D17
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
