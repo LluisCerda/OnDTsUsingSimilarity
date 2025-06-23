@@ -162,42 +162,6 @@ class SimilarityDecisionTree_D17:
                 if len(child_global_indices) > 0:
                     self._traverse_tree(X_normalized_full, child_node_definition, child_global_indices, y_pred_array)
     
-    def gower_similarity_to_prototype2(self, X_normalized_subset, prototype_vector_normalized):
-        
-        total_similarity_accumulator = np.zeros(X_normalized_subset.shape[0], dtype=np.float64)
-        
-        if np.any(self.isNumeric):
-
-            numeric_sim_per_feature = 1.0 - np.abs(X_normalized_subset[:, self.isNumeric] - prototype_vector_normalized[self.isNumeric])
-
-            numeric_subset_is_nan = np.isnan(numeric_sim_per_feature)
-            numeric_sim_per_feature[numeric_subset_is_nan] = 0.0
-
-            weighted_numeric_sim = np.sum(numeric_sim_per_feature * self.weights[self.isNumeric], axis=1)
-            total_similarity_accumulator += weighted_numeric_sim
-
-        if np.any(self.isCategorical):
-
-            categorical_matches_per_feature = (X_normalized_subset[:, self.isCategorical] == prototype_vector_normalized[self.isCategorical])
-            weighted_categorical_sim = np.sum(categorical_matches_per_feature.astype(float) * self.weights[self.isCategorical], axis=1)
-            total_similarity_accumulator += weighted_categorical_sim
-
-            # intersection = np.logical_and(X_normalized_subset[:, self.isCategorical], prototype_vector_normalized[self.isCategorical])
-            # union = np.logical_or(X_normalized_subset[:, self.isCategorical], prototype_vector_normalized[self.isCategorical])
-            
-            # intersection_count = np.sum(intersection, axis=1)
-            # union_count = np.sum(union, axis=1)
-
-            # union_count_safe = np.where(union_count == 0, 1, union_count)
-
-            # binaryDifferences = (union_count - intersection_count) / union_count_safe
-
-            # binaryDifferences = binaryDifferences * np.sum(self.weights[self.isCategorical])
-
-            # total_similarity_accumulator -= binaryDifferences
-        
-        return total_similarity_accumulator
-    
     def gower_similarity_to_prototype(self, X_normalized_subset, prototype_vector_normalized):
         
         n_samples = X_normalized_subset.shape[0]
